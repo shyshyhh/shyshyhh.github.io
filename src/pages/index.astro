@@ -22,9 +22,21 @@ const elsewhere = [
   LINKS.scholar && { href: LINKS.scholar, label: 'scholar' },
   LINKS.email && { href: `mailto:${LINKS.email}`, label: 'email' },
 ].filter(Boolean);
+
+// Structured data so search engines connect this site to the right person.
+const personSchema = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: SITE.name,
+  url: Astro.site?.href,
+  jobTitle: 'Member of Technical Staff',
+  worksFor: { '@type': 'Organization', name: 'OpenAI' },
+  sameAs: [LINKS.linkedin, LINKS.github, LINKS.scholar].filter(Boolean),
+});
 ---
 
 <Base>
+  <script type="application/ld+json" is:inline set:html={personSchema} />
   <h1>{SITE.name}</h1>
   <p class="muted" style="margin-top: 0.35rem;"><em>{SITE.tagline}</em></p>
 
