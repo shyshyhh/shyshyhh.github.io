@@ -32,6 +32,11 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 
+// Years since mount collecting began (Aug 2023), recomputed on each build.
+const mountYears = Math.round(
+  (Date.now() - new Date('2023-08-01').getTime()) / (365.25 * 24 * 3600 * 1000)
+);
+
 const fmt = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   day: 'numeric',
@@ -104,7 +109,7 @@ const personSchema = JSON.stringify({
             target="_blank"
             rel="noopener noreferrer"
             >{mounts.pct}% of World of Warcraft's mounts</a
-          >.
+          > in the past {mountYears} years.
         </p>
       </div>
     </div>
