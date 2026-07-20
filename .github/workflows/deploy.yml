@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    # Weekly rebuild (Mondays 08:00 UTC) so the mount stats stay fresh.
+    - cron: '0 8 * * 1'
 
 permissions:
   contents: read
@@ -15,6 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Refresh WoW mount stats (falls back to committed values on failure)
+        continue-on-error: true
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          node scripts/fetch-mounts.mjs
       - uses: withastro/action@v3
 
   deploy:

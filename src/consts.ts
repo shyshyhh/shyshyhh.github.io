@@ -9,7 +9,7 @@ export const SITE = {
 
 // Set a value to '' to hide that link.
 export const LINKS = {
-  email: 'hanyusongd@gmail.com',
+  email: 'hanyusongwork@gmail.com',
   linkedin: 'https://www.linkedin.com/in/hanyusong1/',
   github: 'https://github.com/shyshyhh',
   scholar: 'https://scholar.google.com/citations?user=JZ2eopsAAAAJ',
