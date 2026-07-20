@@ -19,14 +19,14 @@
 }
 
 :root.dark {
-  --bg: #171614;
-  --fg: #e6e3dd;
-  --muted: #8f8a80;
-  --faint: #6b665e;
-  --hair: #2b2926;
-  --link-underline: #4a463f;
-  --code-bg: #201f1c;
-  --selection: #35322c;
+  --bg: #262624;
+  --fg: #e8e5df;
+  --muted: #9c968b;
+  --faint: #767065;
+  --hair: #3b3835;
+  --link-underline: #575249;
+  --code-bg: #302e2b;
+  --selection: #46423c;
   color-scheme: dark;
 }
 
