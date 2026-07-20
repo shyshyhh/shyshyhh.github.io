@@ -2,7 +2,31 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import { SITE, LINKS } from '../consts';
+import Gallery from '../components/Gallery.astro';
 import mounts from '../data/mounts.json';
+
+const photos = [
+  {
+    src: '/photos/dog.jpg',
+    alt: 'Me, with my dog looking over my shoulder',
+    caption: 'With my dog.',
+  },
+  {
+    src: '/photos/kittens-wow.jpg',
+    alt: 'Two kittens sitting in front of a monitor showing World of Warcraft',
+    caption: 'Two of the cats, watching me play World of Warcraft.',
+  },
+  {
+    src: '/photos/cats.gif',
+    alt: 'Four cats sitting in a row on a kitchen counter',
+    caption: 'All four of them.',
+  },
+  {
+    src: '/photos/vagabond.jpg',
+    alt: 'An ink illustration page from the manga Vagabond',
+    caption: 'From Vagabond, by Takehiko Inoue.',
+  },
+];
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -52,7 +76,11 @@ const personSchema = JSON.stringify({
       published research on <a href="/papers/">fair outlier detection</a>.
     </p>
     <p>
-      Away from the keyboard, I've collected
+      I play a lot of table tennis and some badminton, and I enjoy Japanese
+      literature and manga. I live with four cats and a dog.
+    </p>
+    <p>
+      I've collected
       <a href="https://simplearmory.com/#/us/illidan/xxwinter/collectable/mounts"
         >{mounts.pct}% of World of Warcraft's mounts</a
       >.
@@ -85,5 +113,10 @@ const personSchema = JSON.stringify({
     <p class="small muted" style="display: flex; gap: 1rem;">
       {elsewhere.map((l) => <a href={l.href}>{l.label}</a>)}
     </p>
+  </section>
+
+  <section>
+    <h2>Snapshots</h2>
+    <Gallery photos={photos} />
   </section>
 </Base>

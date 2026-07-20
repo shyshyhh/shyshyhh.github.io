@@ -1,0 +1,46 @@
+---
+interface Photo {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
+const { photos } = Astro.props as { photos: Photo[] };
+---
+
+<figure class="gallery" data-gallery>
+  <button class="gallery-stage" type="button" aria-label="Show next photo">
+    {
+      photos.map((p, i) => (
+        <img
+          src={p.src}
+          alt={p.alt}
+          loading="lazy"
+          class:list={['gallery-img', { active: i === 0 }]}
+        />
+      ))
+    }
+  </button>
+  <figcaption class="gallery-meta small">
+    <span class="mono muted gallery-counter" aria-live="polite"
+      >1 / {photos.length}</span
+    >
+    <span class="muted gallery-caption"><em>{photos[0].caption}</em></span>
+  </figcaption>
+</figure>
+
+<script is:inline define:vars={{ captions: photos.map((p) => p.caption) }}>
+  const root = document.querySelector('[data-gallery]');
+  const imgs = [...root.querySelectorAll('.gallery-img')];
+  const counter = root.querySelector('.gallery-counter');
+  const caption = root.querySelector('.gallery-caption');
+  let i = 0;
+  root.querySelector('.gallery-stage').addEventListener('click', () => {
+    imgs[i].classList.remove('active');
+    i = (i + 1) % imgs.length;
+    imgs[i].classList.add('active');
+    counter.textContent = `${i + 1} / ${imgs.length}`;
+    caption.innerHTML = `<em></em>`;
+    caption.firstChild.textContent = captions[i];
+  });
+</script>
