@@ -7,9 +7,10 @@ import '../styles/global.css';
 interface Props {
   title?: string;
   description?: string;
+  wide?: boolean;
 }
 
-const { title, description = SITE.description } = Astro.props;
+const { title, description = SITE.description, wide = false } = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.name}` : SITE.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
@@ -44,7 +45,7 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
       document.documentElement.classList.toggle('dark', theme === 'dark');
     </script>
   </head>
-  <body>
+  <body class:list={{ wide }}>
     <Header />
     <main class="wrap">
       <slot />

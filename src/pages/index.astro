@@ -1,37 +1,36 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
-import { SITE, LINKS } from '../consts';
 import Gallery from '../components/Gallery.astro';
+import { SITE, LINKS } from '../consts';
 import mounts from '../data/mounts.json';
 
 const photos = [
   {
     src: '/photos/dog.jpg',
-    alt: 'Me, with my dog looking over my shoulder',
-    caption: 'With my dog.',
+    alt: 'Me with Nono, my dog, looking over my shoulder',
+    caption: 'With Nono.',
   },
   {
     src: '/photos/kittens-wow.jpg',
-    alt: 'Two kittens sitting in front of a monitor showing World of Warcraft',
-    caption: 'Two of the cats, watching me play World of Warcraft.',
+    alt: 'Nelly and Stewie as kittens, watching World of Warcraft on a monitor',
+    caption: 'Nelly and Stewie looking at World of Warcraft when they were kittens.',
   },
   {
     src: '/photos/cats.gif',
-    alt: 'Four cats sitting in a row on a kitchen counter',
-    caption: 'All four of them.',
+    alt: 'Four cats sitting in a row on the kitchen counter',
+    caption: 'Cat harness.',
   },
   {
     src: '/photos/vagabond.jpg',
     alt: 'An ink illustration page from the manga Vagabond',
-    caption: 'From Vagabond, by Takehiko Inoue.',
+    caption: 'From Vagabond, by 井上雄彦.',
   },
 ];
 
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
-const recent = posts.slice(0, 3);
 
 const fmt = new Intl.DateTimeFormat('en-US', {
   month: 'short',
@@ -39,6 +38,22 @@ const fmt = new Intl.DateTimeFormat('en-US', {
   year: 'numeric',
   timeZone: 'UTC',
 });
+
+const papers = [
+  {
+    title: 'Deep Clustering based Fair Outlier Detection',
+    authors: ['Hanyu Song', 'Peizhao Li', 'Hongfu Liu'],
+    venue: 'KDD 2021',
+    links: [
+      { label: 'arXiv', href: 'https://arxiv.org/abs/2106.05127' },
+      { label: 'ACM', href: 'https://dl.acm.org/doi/10.1145/3447548.3467225' },
+      {
+        label: 'code',
+        href: 'https://github.com/brandeis-machine-learning/FairOutlierDetection',
+      },
+    ],
+  },
+];
 
 const elsewhere = [
   LINKS.github && { href: LINKS.github, label: 'github' },
@@ -59,40 +74,51 @@ const personSchema = JSON.stringify({
 });
 ---
 
-<Base>
+<Base wide>
   <script type="application/ld+json" is:inline set:html={personSchema} />
-  <h1>{SITE.name}</h1>
-  <p class="muted" style="margin-top: 0.35rem;"><em>{SITE.tagline}</em></p>
 
-  <section style="margin-top: 2.25rem;">
-    <p>
-      I'm an engineer at OpenAI, where I work on integrity in Applied
-      Foundations. Before that I spent five years at Tableau building
-      conversational analytics and agentic systems.
-    </p>
-    <p>
-      Outside of work, I study how agentic models are evaluated and trained:
-      environments, evals, and reinforcement learning. Earlier in my career I
-      published research on <a href="/papers/">fair outlier detection</a>.
-    </p>
-    <p>
-      I play a lot of table tennis and some badminton, and I enjoy Japanese
-      literature and manga. I live with four cats and a dog.
-    </p>
-    <p>
-      I've collected
-      <a href="https://simplearmory.com/#/us/illidan/xxwinter/collectable/mounts"
-        >{mounts.pct}% of World of Warcraft's mounts</a
-      >.
-    </p>
+  <section class="hero">
+    <div class="hero-text">
+      <h1>{SITE.name}</h1>
+      <p class="muted" style="margin-top: 0.35rem;"><em>{SITE.tagline}</em></p>
+
+      <div style="margin-top: 2.25rem;">
+        <p>
+          I'm an engineer at OpenAI, where I work on integrity in Applied
+          Foundations. Before that I spent five years at Tableau building
+          conversational analytics and agentic systems.
+        </p>
+        <p>
+          Outside of work, I study how agentic models are evaluated and
+          trained: environments, evals, and reinforcement learning. Earlier in
+          my career I published research on
+          <a href="#papers">fair outlier detection</a>.
+        </p>
+        <p>
+          I play a lot of table tennis and some badminton, and I enjoy
+          Japanese literature and manga. I live with four cats and a dog.
+        </p>
+        <p>
+          I've collected
+          <a
+            href="https://simplearmory.com/#/us/illidan/xxwinter/collectable/mounts"
+            >{mounts.pct}% of World of Warcraft's mounts</a
+          >.
+        </p>
+      </div>
+    </div>
+
+    <aside class="hero-gallery">
+      <Gallery photos={photos} />
+    </aside>
   </section>
 
-  <section>
+  <section class="stack">
     <h2>Writing</h2>
     {
-      recent.length > 0 ? (
+      posts.length > 0 ? (
         <ul class="post-list">
-          {recent.map((post) => (
+          {posts.map((post) => (
             <li>
               <span class="date mono">{fmt.format(post.data.date)}</span>
               <a href={`/writing/${post.slug}/`}>{post.data.title}</a>
@@ -108,15 +134,36 @@ const personSchema = JSON.stringify({
     }
   </section>
 
-  <section>
+  <section class="stack" id="papers">
+    <h2>Papers</h2>
+    {
+      papers.map((paper) => (
+        <div class="paper">
+          <p class="title" style="margin-bottom: 0.15rem;">{paper.title}</p>
+          <p class="meta small">
+            {paper.authors.map((a, i) => (
+              <>
+                {i > 0 && ', '}
+                {a === 'Hanyu Song' ? <strong>{a}</strong> : a}
+              </>
+            ))}
+            {' · '}
+            {paper.venue}
+          </p>
+          <p class="links small">
+            {paper.links.map((l) => (
+              <a href={l.href}>{l.label}</a>
+            ))}
+          </p>
+        </div>
+      ))
+    }
+  </section>
+
+  <section class="stack">
     <h2>Elsewhere</h2>
     <p class="small muted" style="display: flex; gap: 1rem;">
       {elsewhere.map((l) => <a href={l.href}>{l.label}</a>)}
     </p>
-  </section>
-
-  <section>
-    <h2>Snapshots</h2>
-    <Gallery photos={photos} />
   </section>
 </Base>

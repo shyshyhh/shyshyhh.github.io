@@ -3,24 +3,12 @@ import { SITE } from '../consts';
 
 const path = Astro.url.pathname;
 const isHome = path === '/';
-const isActive = (href: string) =>
-  href === '/' ? path === '/' : path.startsWith(href);
-
-const nav = [
-  { href: '/writing/', label: 'writing' },
-  { href: '/papers/', label: 'papers' },
-];
 ---
 
 <header class="site-header">
   <div class="wrap row">
     {isHome ? <span /> : <a href="/" class="site-name">{SITE.name}</a>}
     <nav class="site-nav">
-      {nav.map((item) => (
-        <a href={item.href} aria-current={isActive(item.href) ? 'page' : undefined}>
-          {item.label}
-        </a>
-      ))}
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">◐</button>
     </nav>
   </div>
