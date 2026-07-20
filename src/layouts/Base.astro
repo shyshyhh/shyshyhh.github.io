@@ -1,0 +1,54 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { SITE } from '../consts';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = SITE.description } = Astro.props;
+const pageTitle = title ? `${title} · ${SITE.name}` : SITE.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={SITE.name} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // Runs before paint to avoid a light/dark flash.
+      const theme =
+        localStorage.getItem('theme') ??
+        (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    </script>
+  </head>
+  <body>
+    <Header />
+    <main class="wrap">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import Post from '../../layouts/Post.astro';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+const minutes = Math.max(1, Math.round(post.body.split(/\s+/).length / 200));
+---
+
+<Post
+  title={post.data.title}
+  description={post.data.description}
+  date={post.data.date}
+  minutes={minutes}
+>
+  <Content />
+</Post>

@@ -1,0 +1,31 @@
+---
+import Base from './Base.astro';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  date: Date;
+  minutes?: number;
+}
+
+const { title, description, date, minutes } = Astro.props;
+const formatted = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+}).format(date);
+---
+
+<Base title={title} description={description}>
+  <article>
+    <header class="article-header">
+      <h1>{title}</h1>
+      <p class="mono muted">{formatted}{minutes ? ` · ${minutes} min read` : ''}</p>
+    </header>
+    <div class="prose">
+      <slot />
+    </div>
+  </article>
+</Base>

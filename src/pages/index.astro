@@ -1,0 +1,77 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import { SITE, LINKS } from '../consts';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const recent = posts.slice(0, 3);
+
+const fmt = new Intl.DateTimeFormat('en-US', {
+  month: 'short',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+});
+
+const elsewhere = [
+  LINKS.github && { href: LINKS.github, label: 'github' },
+  LINKS.linkedin && { href: LINKS.linkedin, label: 'linkedin' },
+  LINKS.scholar && { href: LINKS.scholar, label: 'scholar' },
+  LINKS.email && { href: `mailto:${LINKS.email}`, label: 'email' },
+].filter(Boolean);
+---
+
+<Base>
+  <h1>{SITE.name}</h1>
+  <p class="muted" style="margin-top: 0.35rem;"><em>{SITE.tagline}</em></p>
+
+  <section style="margin-top: 2.25rem;">
+    <p>
+      I'm an engineer at OpenAI. Before this I spent five years at Tableau
+      (Salesforce) building conversational analytics and agentic systems —
+      teaching software to answer questions about data, and increasingly to
+      act on them.
+    </p>
+    <p>
+      These days I think about how agentic models should be evaluated and
+      trained: environments, evals, and reinforcement learning. In a past
+      life I worked on <a href="/papers/">fair outlier detection</a>.
+    </p>
+    <p>
+      Off the clock, I own
+      <a href="https://simplearmory.com/#/us/illidan/xxwinter/collectable/mounts"
+        >97% of World of Warcraft's mounts</a
+      > — kinda proud of that.
+    </p>
+  </section>
+
+  <section>
+    <h2>Writing</h2>
+    {
+      recent.length > 0 ? (
+        <ul class="post-list">
+          {recent.map((post) => (
+            <li>
+              <span class="date mono">{fmt.format(post.data.date)}</span>
+              <a href={`/writing/${post.slug}/`}>{post.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty-state">
+          Nothing here yet — first post coming soon. There's an
+          <a href="/rss.xml">RSS feed</a> if you'd like it delivered.
+        </p>
+      )
+    }
+  </section>
+
+  <section>
+    <h2>Elsewhere</h2>
+    <p class="small muted" style="display: flex; gap: 1rem;">
+      {elsewhere.map((l) => <a href={l.href}>{l.label}</a>)}
+    </p>
+  </section>
+</Base>
