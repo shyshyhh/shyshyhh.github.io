@@ -59,7 +59,6 @@ const elsewhere = [
   LINKS.github && { href: LINKS.github, label: 'github' },
   LINKS.linkedin && { href: LINKS.linkedin, label: 'linkedin' },
   LINKS.scholar && { href: LINKS.scholar, label: 'scholar' },
-  LINKS.email && { href: `mailto:${LINKS.email}`, label: 'email' },
 ].filter(Boolean);
 
 // Structured data so search engines connect this site to the right person.
@@ -102,6 +101,8 @@ const personSchema = JSON.stringify({
           I've collected
           <a
             href="https://simplearmory.com/#/us/illidan/xxwinter/collectable/mounts"
+            target="_blank"
+            rel="noopener noreferrer"
             >{mounts.pct}% of World of Warcraft's mounts</a
           >.
         </p>
@@ -162,8 +163,9 @@ const personSchema = JSON.stringify({
 
   <section class="stack">
     <h2>Elsewhere</h2>
-    <p class="small muted" style="display: flex; gap: 1rem;">
+    <p class="small muted" style="display: flex; gap: 1rem; flex-wrap: wrap;">
       {elsewhere.map((l) => <a href={l.href}>{l.label}</a>)}
+      {LINKS.emailDisplay && <span>{LINKS.emailDisplay}</span>}
     </p>
   </section>
 </Base>

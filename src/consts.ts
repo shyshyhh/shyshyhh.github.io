@@ -9,7 +9,8 @@ export const SITE = {
 
 // Set a value to '' to hide that link.
 export const LINKS = {
-  email: 'hanyusongwork@gmail.com',
+  // Shown as plain text (no mailto link) so scrapers don't harvest it.
+  emailDisplay: 'hanyusongwork [at] gmail',
   linkedin: 'https://www.linkedin.com/in/hanyusong1/',
   github: 'https://github.com/shyshyhh',
   scholar: 'https://scholar.google.com/citations?user=JZ2eopsAAAAJ',

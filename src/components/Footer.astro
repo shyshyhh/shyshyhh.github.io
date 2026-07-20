@@ -8,8 +8,7 @@ const year = new Date().getFullYear();
   <div class="wrap row small">
     <span>© {year} {SITE.name}</span>
     <span>
-      {LINKS.email && <a href={`mailto:${LINKS.email}`}>email</a>}{' '}
-      · <a href="/rss.xml">rss</a>
+      {LINKS.emailDisplay && <>{LINKS.emailDisplay} · </>}<a href="/rss.xml">rss</a>
     </span>
   </div>
 </footer>
