@@ -1,164 +1,76 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
-  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="581.818886pt" height="232.88582pt" viewBox="0 0 581.818886 232.88582" xmlns="http://www.w3.org/2000/svg" version="1.1">
- <metadata>
-  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
-   <cc:Work>
-    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-07-21T09:49:39.066180</dc:date>
-    <dc:format>image/svg+xml</dc:format>
-    <dc:creator>
-     <cc:Agent>
-      <dc:title>Matplotlib v3.10.3, https://matplotlib.org/</dc:title>
-     </cc:Agent>
-    </dc:creator>
-   </cc:Work>
-  </rdf:RDF>
- </metadata>
- <defs>
-  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
- </defs>
- <g id="figure_1">
-  <g id="patch_1">
-   <path d="M 0 232.88582 
-L 581.818886 232.88582 
-L 581.818886 0 
-L 0 0 
-z
-" style="fill: #ffffff"/>
-  </g>
-  <g id="axes_1">
-   <g id="patch_2">
-    <path d="M 140.54125 223.838645 
-L 571.302857 223.838645 
-L 571.302857 23.077969 
-L 140.54125 23.077969 
-z
-" style="fill: #ffffff"/>
-   </g>
-   <g id="patch_3">
-    <path d="M 140.54125 32.203454 
-L 521.143488 32.203454 
-L 521.143488 60.479606 
-L 140.54125 60.479606 
-z
-" clip-path="url(#pe56a9fcc66)" style="fill: #4361ee; opacity: 0.85"/>
-   </g>
-   <g id="patch_4">
-    <path d="M 140.54125 83.614639 
-L 466.06113 83.614639 
-L 466.06113 111.89079 
-L 140.54125 111.89079 
-z
-" clip-path="url(#pe56a9fcc66)" style="fill: #4361ee; opacity: 0.85"/>
-   </g>
-   <g id="patch_5">
-    <path d="M 140.54125 135.025823 
-L 462.770932 135.025823 
-L 462.770932 163.301975 
-L 140.54125 163.301975 
-z
-" clip-path="url(#pe56a9fcc66)" style="fill: #4361ee; opacity: 0.85"/>
-   </g>
-   <g id="patch_6">
-    <path d="M 140.54125 186.437008 
-L 298.194853 186.437008 
-L 298.194853 214.71316 
-L 140.54125 214.71316 
-z
-" clip-path="url(#pe56a9fcc66)" style="fill: #4361ee; opacity: 0.85"/>
-   </g>
-   <g id="matplotlib.axis_1"/>
-   <g id="matplotlib.axis_2">
-    <g id="ytick_1">
-     <g id="line2d_1">
-      <defs>
-       <path id="m6c9c922339" d="M 0 0 
-L -3.5 0 
-" style="stroke: #000000; stroke-width: 0.8"/>
-      </defs>
-      <g>
-       <use xlink:href="#m6c9c922339" x="140.54125" y="46.34153" style="stroke: #000000; stroke-width: 0.8"/>
-      </g>
-     </g>
-     <g id="text_1">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(41.120625 45.093717)">comprehension</text>
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(21.238125 58.531092)">(median accuracy)</text>
-     </g>
-    </g>
-    <g id="ytick_2">
-     <g id="line2d_2">
-      <g>
-       <use xlink:href="#m6c9c922339" x="140.54125" y="97.752714" style="stroke: #000000; stroke-width: 0.8"/>
-      </g>
-     </g>
-     <g id="text_2">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(34.025625 96.504902)">calibration helps</text>
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(60.421875 109.942277)">(mean gain)</text>
-     </g>
-    </g>
-    <g id="ytick_3">
-     <g id="line2d_3">
-      <g>
-       <use xlink:href="#m6c9c922339" x="140.54125" y="149.163899" style="stroke: #000000; stroke-width: 0.8"/>
-      </g>
-     </g>
-     <g id="text_3">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(34.003125 147.916087)">lesson judgment</text>
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(53.473125 161.353462)">(median bits)</text>
-     </g>
-    </g>
-    <g id="ytick_4">
-     <g id="line2d_4">
-      <g>
-       <use xlink:href="#m6c9c922339" x="140.54125" y="200.575084" style="stroke: #000000; stroke-width: 0.8"/>
-      </g>
-     </g>
-     <g id="text_4">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(7.2 199.327271)">beats random choice</text>
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(47.1375 212.764646)">(1 - p/0.05 ... )</text>
-     </g>
-    </g>
-   </g>
-   <g id="line2d_5">
-    <path d="M 525.149828 223.838645 
-L 525.149828 23.077969 
-" clip-path="url(#pe56a9fcc66)" style="fill: none; stroke: #e63946; stroke-width: 2; stroke-linecap: square"/>
-   </g>
-   <g id="patch_7">
-    <path d="M 140.54125 223.838645 
-L 140.54125 23.077969 
-" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
-   </g>
-   <g id="patch_8">
-    <path d="M 140.54125 223.838645 
-L 571.302857 223.838645 
-" style="fill: none; stroke: #000000; stroke-width: 0.8; stroke-linejoin: miter; stroke-linecap: square"/>
-   </g>
-   <g id="text_5">
-    <text style="font-weight: 700; font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #e63946" x="527.072871" y="223.710117" transform="rotate(-0 527.072871 223.710117)">pass line</text>
-   </g>
-   <g id="text_6">
-    <text style="font-weight: 700; font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #ffffff" x="148.233422" y="48.962936" transform="rotate(-0 148.233422 48.962936)">0.594 vs 0.60</text>
-   </g>
-   <g id="text_7">
-    <text style="font-weight: 700; font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #ffffff" x="148.233422" y="100.374121" transform="rotate(-0 148.233422 100.374121)">+0.025 vs +0.030</text>
-   </g>
-   <g id="text_8">
-    <text style="font-weight: 700; font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #ffffff" x="148.233422" y="151.785305" transform="rotate(-0 148.233422 151.785305)">+0.209 vs +0.250</text>
-   </g>
-   <g id="text_9">
-    <text style="font-weight: 700; font-size: 9.5px; font-family: 'DejaVu Sans'; text-anchor: start; fill: #ffffff" x="148.233422" y="203.19649" transform="rotate(-0 148.233422 203.19649)">p = 0.12 vs 0.05</text>
-   </g>
-   <g id="text_10">
-    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start" x="140.54125" y="17.077969" transform="rotate(-0 140.54125 17.077969)">The four gates, one run, no retries</text>
-   </g>
-  </g>
- </g>
- <defs>
-  <clipPath id="pe56a9fcc66">
-   <rect x="140.54125" y="23.077969" width="430.761607" height="200.760676"/>
-  </clipPath>
- </defs>
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="500" viewBox="0 0 840 500" role="img" aria-labelledby="title desc">
+  <title id="title">D-009D gate audit</title>
+  <desc id="desc">Four hard-gate groups failed. Mean comprehension, positive information count, order robustness, and the greedy anchor passed; the remaining registered criteria failed.</desc>
+  <style>
+    text { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #172033; }
+    .title { font-size: 24px; font-weight: 700; }
+    .subtitle { font-size: 14px; fill: #586174; }
+    .header { font-size: 12px; font-weight: 700; fill: #737b8c; letter-spacing: .04em; text-transform: uppercase; }
+    .group { font-size: 15px; font-weight: 700; }
+    .measure, .value { font-size: 14px; }
+    .value { font-variant-numeric: tabular-nums; }
+    .status { font-size: 12px; font-weight: 800; text-anchor: middle; }
+    .pass { fill: #047857; }
+    .fail { fill: #b42318; }
+  </style>
+  <rect width="840" height="500" fill="#ffffff"/>
+  <text x="24" y="34" class="title">D-009D gate audit</text>
+  <text x="24" y="58" class="subtitle">Four hard-gate groups failed; both safeguards passed</text>
+
+  <text x="24" y="88" class="header">Hard group</text>
+  <text x="190" y="88" class="header">Criterion</text>
+  <text x="510" y="88" class="header">Observed / required</text>
+  <text x="787" y="88" class="header" text-anchor="middle">Result</text>
+
+  <rect x="16" y="98" width="808" height="68" rx="8" fill="#f7f8fa"/>
+  <text x="24" y="126" class="group">Comprehension</text>
+  <text x="190" y="120" class="measure">Mean balanced accuracy</text>
+  <text x="510" y="120" class="value">0.575684 / ≥ 0.55</text>
+  <rect x="758" y="104" width="58" height="24" rx="12" fill="#dff6eb"/>
+  <text x="787" y="121" class="status pass">PASS</text>
+  <text x="190" y="148" class="measure">Median balanced accuracy</text>
+  <text x="510" y="148" class="value">0.593750 / ≥ 0.60</text>
+  <rect x="758" y="132" width="58" height="24" rx="12" fill="#fde7e5"/>
+  <text x="787" y="149" class="status fail">FAIL</text>
+
+  <rect x="16" y="174" width="808" height="68" rx="8" fill="#f7f8fa"/>
+  <text x="24" y="202" class="group">Calibration</text>
+  <text x="190" y="196" class="measure">Mean calibrated-minus-fixed gain</text>
+  <text x="510" y="196" class="value">+0.025391 / ≥ +0.030</text>
+  <rect x="758" y="180" width="58" height="24" rx="12" fill="#fde7e5"/>
+  <text x="787" y="197" class="status fail">FAIL</text>
+  <text x="190" y="224" class="measure">Concepts with positive gain</text>
+  <text x="510" y="224" class="value">9/16 / ≥ 10/16</text>
+  <rect x="758" y="208" width="58" height="24" rx="12" fill="#fde7e5"/>
+  <text x="787" y="225" class="status fail">FAIL</text>
+
+  <rect x="16" y="250" width="808" height="68" rx="8" fill="#f7f8fa"/>
+  <text x="24" y="278" class="group">Exact-H ranking</text>
+  <text x="190" y="272" class="measure">Median selected-minus-mean advantage</text>
+  <text x="510" y="272" class="value">+0.209453 bit / ≥ +0.25</text>
+  <rect x="758" y="256" width="58" height="24" rx="12" fill="#fde7e5"/>
+  <text x="787" y="273" class="status fail">FAIL</text>
+  <text x="190" y="300" class="measure">Concepts with positive advantage</text>
+  <text x="510" y="300" class="value">11/16 / ≥ 10/16</text>
+  <rect x="758" y="284" width="58" height="24" rx="12" fill="#dff6eb"/>
+  <text x="787" y="301" class="status pass">PASS</text>
+
+  <rect x="16" y="326" width="808" height="44" rx="8" fill="#f7f8fa"/>
+  <text x="24" y="354" class="group">Randomization</text>
+  <text x="190" y="354" class="measure">Exact tie-inclusive tail</text>
+  <text x="510" y="354" class="value">p = 0.121979 / &lt; 0.05</text>
+  <rect x="758" y="338" width="58" height="24" rx="12" fill="#fde7e5"/>
+  <text x="787" y="355" class="status fail">FAIL</text>
+
+  <line x1="16" y1="397" x2="824" y2="397" stroke="#d8dce5"/>
+  <text x="24" y="424" class="header">Safeguards</text>
+  <text x="190" y="424" class="measure">Rotation-order |ρ|</text>
+  <text x="510" y="424" class="value">0.005133 / ≤ 0.20</text>
+  <rect x="758" y="408" width="58" height="24" rx="12" fill="#dff6eb"/>
+  <text x="787" y="425" class="status pass">PASS</text>
+  <text x="190" y="462" class="measure">Greedy-anchor median</text>
+  <text x="510" y="462" class="value">+2.551590 bits / ≥ +1.0</text>
+  <rect x="758" y="446" width="58" height="24" rx="12" fill="#dff6eb"/>
+  <text x="787" y="463" class="status pass">PASS</text>
 </svg>
