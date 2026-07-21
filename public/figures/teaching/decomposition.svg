@@ -140,7 +140,7 @@ L 0 3.5
      </g>
     </g>
     <g id="text_9">
-     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle" x="360.16625" y="206.289844" transform="rotate(-0 360.16625 206.289844)">effect on a fresh student's accuracy (points)</text>
+     <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle" x="360.16625" y="206.289844" transform="rotate(-0 360.16625 206.289844)">paired difference in recipient learning gain (BA points)</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -156,7 +156,7 @@ L -3.5 0
       </g>
      </g>
      <g id="text_10">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(66.106875 143.473187)">well-chosen examples</text>
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(40.106875 143.473187)">information-greedy inputs</text>
       <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(26.06625 156.910562)">(vs random, labels matched)</text>
      </g>
     </g>
@@ -167,8 +167,8 @@ L -3.5 0
       </g>
      </g>
      <g id="text_11">
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(108.358125 51.667126)">wrong answers</text>
-      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(7.2 65.104501)">(same examples, labels flipped)</text>
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(25.358125 51.667126)">flipped labels on greedy inputs</text>
+      <text style="font-size: 12px; font-family: 'DejaVu Sans'" transform="translate(19.2 65.104501)">(vs label-matched random)</text>
      </g>
     </g>
    </g>
@@ -194,7 +194,7 @@ L 514.52625 174.557969
     <text style="font-weight: 700; font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: end; fill: #1a1a2e" x="232.506358" y="56.226188" transform="rotate(-0 232.506358 56.226188)">-21.1</text>
    </g>
    <g id="text_14">
-    <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start" x="205.80625" y="17.077969" transform="rotate(-0 205.80625 17.077969)">What makes a lesson teach</text>
+     <text style="font-weight: 700; font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: start" x="205.80625" y="17.077969" transform="rotate(-0 205.80625 17.077969)">D-008 registered point contrasts</text>
    </g>
   </g>
  </g>
