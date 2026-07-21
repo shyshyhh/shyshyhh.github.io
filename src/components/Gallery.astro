@@ -9,7 +9,11 @@ const { photos } = Astro.props as { photos: Photo[] };
 ---
 
 <figure class="gallery" data-gallery>
-  <button class="gallery-stage" type="button" aria-label="Show next photo">
+  <button
+    class="gallery-stage"
+    type="button"
+    aria-label="Photo gallery. Click the right side for the next photo, the left side for the previous one."
+  >
     {
       photos.map((p, i) => (
         <img
@@ -31,16 +35,30 @@ const { photos } = Astro.props as { photos: Photo[] };
 
 <script is:inline define:vars={{ captions: photos.map((p) => p.caption) }}>
   const root = document.querySelector('[data-gallery]');
+  const stage = root.querySelector('.gallery-stage');
   const imgs = [...root.querySelectorAll('.gallery-img')];
   const counter = root.querySelector('.gallery-counter');
   const caption = root.querySelector('.gallery-caption');
   let i = 0;
-  root.querySelector('.gallery-stage').addEventListener('click', () => {
+
+  const inBackZone = (e) => {
+    const r = stage.getBoundingClientRect();
+    return e.clientX - r.left < r.width / 3;
+  };
+
+  stage.addEventListener('click', (e) => {
+    // Left third goes back; middle and right go forward.
+    // Keyboard activation (detail === 0) always goes forward.
+    const step = e.detail !== 0 && inBackZone(e) ? -1 : 1;
     imgs[i].classList.remove('active');
-    i = (i + 1) % imgs.length;
+    i = (i + step + imgs.length) % imgs.length;
     imgs[i].classList.add('active');
     counter.textContent = `${i + 1} / ${imgs.length}`;
     caption.innerHTML = `<em></em>`;
     caption.firstChild.textContent = captions[i];
+  });
+
+  stage.addEventListener('mousemove', (e) => {
+    stage.style.cursor = inBackZone(e) ? 'w-resize' : 'e-resize';
   });
 </script>
