@@ -1,11 +1,11 @@
 ---
-title: 'Can a model teach the next one?'
+title: 'Can a small language model teach the next one?'
 description: 'A 360M model learned from eight examples. Models up to 7B could not reliably choose the lesson. Here is how that happened.'
 date: 2026-07-21
 draft: false
 ---
 
-Last night I gave a single RTX 3090 a slightly odd homework assignment: can one small language model teach the next one?
+Last night I gave a few small language models a slightly odd homework assignment: pick eight examples that would help the next model learn.
 
 By morning, the student side worked and the teacher side did not. A 360M model improved after studying eight examples. Separate models from 360M to 7B could not reliably choose a useful set of eight.
 
