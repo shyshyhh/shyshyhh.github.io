@@ -24,6 +24,8 @@ jobs:
           npm install --no-save playwright
           npx playwright install --with-deps chromium
           node scripts/fetch-mounts.mjs
+      - name: Verify the nano GPT checkpoint
+        run: npm run check:nano
       - uses: withastro/action@v3
 
   deploy:

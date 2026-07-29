@@ -1,0 +1,165 @@
+---
+import Base from './Base.astro';
+import GPTExplorer from '../components/gpt-architecture/GPTExplorer.jsx';
+import 'katex/dist/katex.min.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  lede?: string;
+  date: Date;
+  minutes?: number;
+  ogImage?: string;
+}
+
+const { title, description, lede, date, minutes, ogImage } = Astro.props;
+const formatted = new Intl.DateTimeFormat('en-US', {
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+  timeZone: 'UTC',
+}).format(date);
+---
+
+<Base title={title} description={description} wide ogImage={ogImage}>
+  <article class="gpt-experience-article">
+    <header class="gpt-experience-header">
+      <p class="mono muted gpt-experience-kicker">INTERACTIVE / MODERN DECODER</p>
+      <h1>{title}</h1>
+      <p class="gpt-experience-lede">{lede}</p>
+      <p class="mono muted">{formatted}{minutes ? ` · ${minutes} min read + lab` : ''}</p>
+    </header>
+
+    <div class="gpt-explorer-breakout">
+      <GPTExplorer client:only="react">
+        <div class="gpt-explorer-fallback" slot="fallback" aria-label="Loading the interactive GPT explorer">
+          <span aria-hidden="true">▥</span>
+          <strong>Loading the trained nano GPT…</strong>
+          <small>4 layers · 8-wide residual stream · 1,800 training steps</small>
+        </div>
+      </GPTExplorer>
+      <noscript>
+        <p class="gpt-explorer-noscript">
+          This explainer needs JavaScript for the interactive 3D view. The article below
+          still covers the same architecture in text.
+        </p>
+      </noscript>
+    </div>
+
+    <div class="prose gpt-experience-copy">
+      <slot />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .gpt-experience-article {
+    padding-top: 0.25rem;
+  }
+
+  .gpt-experience-header {
+    max-width: 47rem;
+    margin: 0 auto 2.1rem;
+    text-align: center;
+  }
+
+  .gpt-experience-kicker {
+    margin-bottom: 0.8rem;
+    letter-spacing: 0.12em;
+  }
+
+  .gpt-experience-header h1 {
+    max-width: 44rem;
+    margin: 0 auto 0.8rem;
+    font-size: clamp(2.15rem, 6vw, 4.65rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+
+  .gpt-experience-lede {
+    max-width: 42rem;
+    margin: 0.85rem auto 1rem;
+    color: var(--muted);
+    font-size: clamp(1.02rem, 2.3vw, 1.28rem);
+    line-height: 1.55;
+  }
+
+  .gpt-explorer-breakout {
+    width: min(94vw, 92rem);
+    margin: 0 50% 3.5rem;
+    transform: translateX(-50%);
+  }
+
+  .gpt-explorer-noscript {
+    max-width: 42rem;
+    margin: 1rem auto;
+    color: var(--muted);
+  }
+
+  .gpt-explorer-fallback {
+    display: grid;
+    height: 908px;
+    place-content: center;
+    justify-items: center;
+    gap: 0.65rem;
+    color: #f4f7ff;
+    border: 1px solid rgba(139, 164, 219, 0.2);
+    border-radius: 28px;
+    background:
+      radial-gradient(circle at 18% -10%, rgba(65, 99, 255, 0.24), transparent 38%),
+      radial-gradient(circle at 82% 12%, rgba(28, 208, 223, 0.12), transparent 30%),
+      #070b16;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    text-align: center;
+  }
+
+  .gpt-explorer-fallback span {
+    color: #70e8ff;
+    font-size: 2.3rem;
+  }
+
+  .gpt-explorer-fallback strong {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .gpt-explorer-fallback small {
+    color: #98a5c0;
+    font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.68rem;
+  }
+
+  .gpt-experience-copy {
+    max-width: var(--measure);
+    margin: 0 auto;
+  }
+
+  @media (max-width: 920px) {
+    .gpt-explorer-fallback {
+      height: 1480px;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .gpt-experience-header {
+      text-align: left;
+    }
+
+    .gpt-experience-header h1 {
+      margin-left: 0;
+    }
+
+    .gpt-experience-lede {
+      margin-left: 0;
+    }
+
+    .gpt-explorer-breakout {
+      width: calc(100vw - 1rem);
+    }
+
+    .gpt-explorer-fallback {
+      height: 1585px;
+      border-radius: 17px;
+    }
+  }
+</style>

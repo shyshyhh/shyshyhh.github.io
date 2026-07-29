@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Post from '../../layouts/Post.astro';
+import GPTArchitectureExperience from '../../layouts/GPTArchitectureExperience.astro';
 
 export async function getStaticPaths() {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -15,11 +16,26 @@ const { Content } = await post.render();
 const minutes = Math.max(1, Math.round(post.body.split(/\s+/).length / 200));
 ---
 
-<Post
-  title={post.data.title}
-  description={post.data.description}
-  date={post.data.date}
-  minutes={minutes}
->
-  <Content />
-</Post>
+{
+  post.data.experience === 'gpt-architecture' ? (
+    <GPTArchitectureExperience
+      title={post.data.title}
+      description={post.data.description}
+      lede={post.data.lede}
+      date={post.data.date}
+      minutes={minutes}
+      ogImage={post.data.ogImage}
+    >
+      <Content />
+    </GPTArchitectureExperience>
+  ) : (
+    <Post
+      title={post.data.title}
+      description={post.data.description}
+      date={post.data.date}
+      minutes={minutes}
+    >
+      <Content />
+    </Post>
+  )
+}
