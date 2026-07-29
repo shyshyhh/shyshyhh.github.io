@@ -1,4 +1,4 @@
-export const STACK_SCENE_SCHEMA = 'gpt-stack-scene/v2';
+export const STACK_SCENE_SCHEMA = 'gpt-stack-scene/v3';
 
 export const STACK_AXES = Object.freeze({
   x: Object.freeze({
@@ -90,6 +90,7 @@ export function buildStackSceneBlueprint({
   layerTokenNorms,
   selectedLayer = 0,
   selectedToken = Math.max(tokens.length - 1, 0),
+  selectedOperation = 'attention-norm',
   expanded = false,
 }) {
   if (!Array.isArray(tokens) || tokens.length === 0) {
@@ -98,6 +99,11 @@ export function buildStackSceneBlueprint({
   assertIntegerInRange(layerCount, 1, 64, 'layerCount');
   assertIntegerInRange(selectedLayer, 0, layerCount - 1, 'selectedLayer');
   assertIntegerInRange(selectedToken, 0, tokens.length - 1, 'selectedToken');
+  if (
+    !STACK_OPERATION_STEPS.some((operation) => operation.id === selectedOperation)
+  ) {
+    throw new RangeError(`Unknown selected operation: ${selectedOperation}`);
+  }
   if (
     layerTokenNorms !== undefined &&
     (!Array.isArray(layerTokenNorms) ||
@@ -192,6 +198,8 @@ export function buildStackSceneBlueprint({
     ? STACK_OPERATION_STEPS.map((step, index) => ({
         ...step,
         id: `layer-${selectedLayer}-${step.id}`,
+        operationId: step.id,
+        selected: step.id === selectedOperation,
         layerIndex: selectedLayer,
         sequenceIndex: index,
         position: point(0, operationY[index], 0),
@@ -300,6 +308,7 @@ export function buildStackSceneBlueprint({
     selection: {
       layerIndex: selectedLayer,
       tokenIndex: selectedToken,
+      operationId: selectedOperation,
     },
     dimensions: {
       tokenSpacing,
@@ -552,7 +561,7 @@ export function inspectStackSceneBlueprint(scene) {
   return [
     `schema: ${scene.schema}`,
     `axes: x=${scene.axes.x.meaning} (${scene.axes.x.direction}); y=${scene.axes.y.meaning} (${scene.axes.y.direction}); z=${scene.axes.z.meaning} (${scene.axes.z.direction})`,
-    `selection: block ${scene.selection.layerIndex + 1}, token ${scene.selection.tokenIndex}; ${scene.expanded ? 'open' : 'collapsed'}`,
+    `selection: block ${scene.selection.layerIndex + 1}, ${scene.selection.operationId}, token ${scene.selection.tokenIndex}; ${scene.expanded ? 'open' : 'collapsed'}`,
     'front elevation (x/y; z branches flattened):',
     ...rows.map(
       (row) =>
@@ -655,6 +664,12 @@ export function validateStackSceneBlueprint(scene) {
     add(
       scene.operations.length === STACK_OPERATION_STEPS.length,
       'the open block must contain every serial operation'
+    );
+    add(
+      scene.operations.filter((operation) => operation.selected).length === 1 &&
+        scene.operations.find((operation) => operation.selected)
+          ?.operationId === scene.selection.operationId,
+      'the open block must expose exactly one selected operation'
     );
     add(
       scene.operations.every(

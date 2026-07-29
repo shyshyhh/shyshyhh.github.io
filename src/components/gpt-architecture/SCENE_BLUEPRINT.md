@@ -21,6 +21,11 @@ sequence:
 5. SwiGLU
 6. residual add
 
+Exactly one operation carries `selected: true`, and its stable
+`operationId` is also stored at `selection.operationId`. The rendered canvas
+mirrors it in `data-selected-operation`, so tests can verify both the geometry
+and the active drill-down without reading pixels.
+
 ## Inspect without rendering
 
 Print a readable front elevation:

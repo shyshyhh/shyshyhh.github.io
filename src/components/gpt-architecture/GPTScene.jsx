@@ -274,6 +274,7 @@ function StackScene({
   selectedToken,
   onLayerSelect,
   onTokenSelect,
+  onOperationSelect,
   reducedMotion,
 }) {
   const { layers } = model;
@@ -347,9 +348,14 @@ function StackScene({
                     args={operation.size}
                     position={operation.position}
                     color={COLORS[operation.colorKey]}
-                    opacity={0.16}
+                    active={operation.selected}
+                    opacity={operation.selected ? 0.38 : 0.12}
+                    onClick={() => onOperationSelect(operation.operationId)}
                   />
-                  <SceneLabel position={operation.labelPosition} tone="active">
+                  <SceneLabel
+                    position={operation.labelPosition}
+                    tone={operation.selected ? 'active' : 'muted'}
+                  >
                     {operation.sequenceIndex + 1} · {operation.shortLabel}
                   </SceneLabel>
                   {operation.tokenCells.map((cell) => {
@@ -364,7 +370,10 @@ function StackScene({
                         }
                         active={selected}
                         opacity={selected ? 0.4 : 0.08}
-                        onClick={() => onTokenSelect(cell.tokenIndex)}
+                        onClick={() => {
+                          onOperationSelect(operation.operationId);
+                          onTokenSelect(cell.tokenIndex);
+                        }}
                       />
                     );
                   })}
@@ -1133,6 +1142,7 @@ function World({
   onLayerSelect,
   onTokenSelect,
   onHeadSelect,
+  onOperationSelect,
   onCellSelect,
   reducedMotion,
   resetKey,
@@ -1172,6 +1182,7 @@ function World({
             selectedToken={selectedToken}
             onLayerSelect={onLayerSelect}
             onTokenSelect={onTokenSelect}
+            onOperationSelect={onOperationSelect}
             reducedMotion={reducedMotion}
           />
         )}
@@ -1262,6 +1273,7 @@ export default function GPTScene(props) {
         ),
         selectedLayer: props.selectedLayer,
         selectedToken: props.selectedToken,
+        selectedOperation: props.selectedOperation,
         expanded: props.exploded,
       });
     },
@@ -1271,6 +1283,7 @@ export default function GPTScene(props) {
       props.model.layers,
       props.model.tokens,
       props.selectedLayer,
+      props.selectedOperation,
       props.selectedToken,
     ]
   );
@@ -1290,6 +1303,9 @@ export default function GPTScene(props) {
       role="img"
       aria-label={props.accessibleLabel}
       data-scene-schema={stackBlueprint?.schema}
+      data-selected-operation={
+        stackBlueprint ? props.selectedOperation : undefined
+      }
       data-axis-contract={
         stackBlueprint
           ? 'x=sequence-right;y=compute-down;z=parallel-branches'

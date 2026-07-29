@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@radix-ui/themes/components/button';
 import * as SegmentedControl from '@radix-ui/themes/components/segmented-control';
 import * as TextField from '@radix-ui/themes/components/text-field';
-import GPTPrimer from './GPTPrimer.jsx';
 import GPTScene, { HEAD_COLORS } from './GPTScene.jsx';
 import TensorInspector from './TensorInspector.jsx';
 import {
@@ -21,13 +20,52 @@ import {
 import './gpt-explorer.css';
 
 const MODES = [
-  { id: 'stack', label: 'Overview', color: '#2563eb' },
+  { id: 'stack', label: 'Block view', color: '#2563eb' },
   { id: 'attention', label: 'Attention', color: '#7c3aed' },
   { id: 'rope', label: 'Position', color: '#4f46e5' },
   { id: 'gqa', label: 'Head sharing', color: '#b45309' },
   { id: 'cache', label: 'KV memory', color: '#047857' },
   { id: 'mlp', label: 'Token MLP', color: '#d14f3f' },
   { id: 'weights', label: 'Weights', color: '#2563eb' },
+];
+
+const BLOCK_OPERATIONS = [
+  {
+    id: 'attention-norm',
+    label: 'RMSNorm',
+    detail: 'before attention',
+    mode: 'stack',
+  },
+  {
+    id: 'attention',
+    label: 'Attention',
+    detail: 'mix tokens',
+    mode: 'attention',
+  },
+  {
+    id: 'attention-residual',
+    label: 'Residual add',
+    detail: 'keep + attention',
+    mode: 'stack',
+  },
+  {
+    id: 'mlp-norm',
+    label: 'RMSNorm',
+    detail: 'before MLP',
+    mode: 'stack',
+  },
+  {
+    id: 'swiglu',
+    label: 'SwiGLU',
+    detail: 'edit each token',
+    mode: 'mlp',
+  },
+  {
+    id: 'mlp-residual',
+    label: 'Residual add',
+    detail: 'keep + MLP',
+    mode: 'stack',
+  },
 ];
 
 const MODE_COPY = {
@@ -79,6 +117,37 @@ const MODE_COPY = {
     summary:
       'Pick any projection in any block. Positive weights rise; negative weights drop. Click a cell to read the exact value used by the live forward pass.',
     formula: 'largest block projection: 8 × 16 = 128 trainable numbers',
+  },
+};
+
+const OPERATION_COPY = {
+  'attention-norm': {
+    eyebrow: 'BLOCK STEP 1 OF 6',
+    title: 'RMSNorm before attention',
+    summary:
+      'Rescale this token’s eight numbers, then apply eight learned gains. The direction stays the same enough to preserve information; the size becomes controlled.',
+    formula: 'x̂ᵢ = (xᵢ / √(mean(x²) + ε)) · gainᵢ',
+  },
+  'attention-residual': {
+    eyebrow: 'BLOCK STEP 3 OF 6',
+    title: 'Add the attention update',
+    summary:
+      'Attention proposes eight changes. The residual path keeps the old eight numbers and adds those changes coordinate by coordinate.',
+    formula: 'x_after_attn = x_in + Δattention',
+  },
+  'mlp-norm': {
+    eyebrow: 'BLOCK STEP 4 OF 6',
+    title: 'RMSNorm before SwiGLU',
+    summary:
+      'The updated residual stream is rescaled again with a second learned gain before the token-wise MLP reads it.',
+    formula: 'x̂ᵢ = (xᵢ / √(mean(x²) + ε)) · mlp_gainᵢ',
+  },
+  'mlp-residual': {
+    eyebrow: 'BLOCK STEP 6 OF 6',
+    title: 'Add the MLP update',
+    summary:
+      'SwiGLU proposes another eight changes. The block finishes by adding them to the state that already contains the attention update.',
+    formula: 'x_out = x_after_attn + Δmlp',
   },
 };
 
@@ -179,6 +248,12 @@ function norm(vector) {
   return Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
 }
 
+function rmsDenominator(vector) {
+  const meanSquare =
+    vector.reduce((sum, value) => sum + value * value, 0) / vector.length;
+  return Math.sqrt(meanSquare + 1e-6);
+}
+
 function flattenHeads(tensor) {
   return tensor.map((token) => token.flat());
 }
@@ -192,51 +267,40 @@ function PanelSection({ label, children, className = '' }) {
   );
 }
 
-function DimensionStrip() {
+function BlockOperationNav({
+  selectedLayer,
+  selectedOperation,
+  onOperationSelect,
+}) {
   return (
-    <div className="gptx-dimensions" aria-label="Nano GPT dimensions">
-      {[
-        ['blocks', '4'],
-        ['d model', '8'],
-        ['Q / KV', '4 / 2'],
-        ['head', '2'],
-        ['MLP', '16'],
-      ].map(([label, value]) => (
-        <div className="gptx-dimension" key={label}>
-          <span>{label}</span>
-          <strong>{value}</strong>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PredictionBars({ predictions }) {
-  const visible = predictions.slice(0, 4);
-  const maximum = visible[0]?.probability || 1;
-  return (
-    <div className="gptx-bars" aria-label="Top next-token predictions">
-      {visible.map((prediction, index) => (
-        <div className="gptx-bar" key={prediction.token}>
-          <span className="gptx-bar-rank">0{index + 1}</span>
-          <span className="gptx-bar-label">
-            {prediction.token === '<eos>' ? '⟨eos⟩' : prediction.token}
-          </span>
-          <span className="gptx-bar-track" aria-hidden="true">
-            <span
-              className="gptx-bar-fill"
-              style={{
-                '--gptx-bar-width': `${Math.max(
-                  2,
-                  (prediction.probability / maximum) * 100
-                )}%`,
-              }}
-            />
-          </span>
-          <span className="gptx-bar-value">{percent(prediction.probability)}</span>
-        </div>
-      ))}
-    </div>
+    <nav
+      className="gptx-operation-nav"
+      aria-label={`Operations inside block ${selectedLayer + 1}`}
+      data-axis-contract="compute=top-to-bottom"
+    >
+      <p>
+        Inside Block {selectedLayer + 1}
+        <span>click any operation</span>
+      </p>
+      <ol>
+        {BLOCK_OPERATIONS.map((operation, index) => (
+          <li key={operation.id}>
+            <button
+              type="button"
+              className={
+                selectedOperation === operation.id ? 'is-selected' : ''
+              }
+              aria-pressed={selectedOperation === operation.id}
+              onClick={() => onOperationSelect(operation)}
+            >
+              <span>{index + 1}</span>
+              <strong>{operation.label}</strong>
+              <small>{operation.detail}</small>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }
 
@@ -421,6 +485,8 @@ function Inspector({
   selectedLayer,
   selectedHead,
   selectedToken,
+  selectedOperation,
+  onOperationSelect,
   onTokenSelect,
   variant,
   onVariantChange,
@@ -442,7 +508,9 @@ function Inspector({
 }) {
   const baseCopy = MODE_COPY[mode];
   const copy =
-    mode === 'weights' && matrixInfo.kind === 'activation'
+    mode === 'stack' && OPERATION_COPY[selectedOperation]
+      ? OPERATION_COPY[selectedOperation]
+      : mode === 'weights' && matrixInfo.kind === 'activation'
       ? {
           eyebrow: 'THE LIVE FORWARD PASS',
           title: 'Every major activation tensor fits',
@@ -472,6 +540,13 @@ function Inspector({
 
   return (
     <aside className="gptx-inspector">
+      {mode !== 'weights' && (
+        <BlockOperationNav
+          selectedLayer={selectedLayer}
+          selectedOperation={selectedOperation}
+          onOperationSelect={onOperationSelect}
+        />
+      )}
       <div className="gptx-inspector-heading">
         <p className="gptx-eyebrow" style={{ '--gptx-mode': MODES.find((item) => item.id === mode)?.color }}>
           {copy.eyebrow}
@@ -484,28 +559,142 @@ function Inspector({
 
       {mode === 'stack' && (
         <>
-          <PanelSection label="nano checkpoint">
-            <DimensionStrip />
-          </PanelSection>
-          <PanelSection label={`next token after “${model.tokens.at(-1)}”`}>
-            <PredictionBars predictions={model.predictions} />
-          </PanelSection>
-          <PanelSection label={`block ${selectedLayer + 1} · “${model.tokens[selectedToken]}”`}>
-            <div className="gptx-delta">
-              <span>
-                attention update
-                <strong>{norm(layer.attentionUpdate[selectedToken]).toFixed(3)}</strong>
-              </span>
-              <span>
-                MLP update
-                <strong>{norm(layer.mlpUpdate[selectedToken]).toFixed(3)}</strong>
-              </span>
-              <span>
-                residual out
-                <strong>{norm(layer.output[selectedToken]).toFixed(3)}</strong>
-              </span>
-            </div>
-          </PanelSection>
+          {selectedOperation === 'attention-norm' && (
+            <PanelSection
+              label={`exact token transform · “${model.tokens[selectedToken]}”`}
+            >
+              <VectorStrip
+                label="input x"
+                values={layer.input[selectedToken]}
+                color="#168aa1"
+              />
+              <VectorStrip
+                label="gain"
+                values={
+                  MODEL_WEIGHTS.layers[selectedLayer].normAttention
+                }
+                color="#765ba7"
+              />
+              <VectorStrip
+                label="output x̂"
+                values={layer.normalizedAttention[selectedToken]}
+                color="#4f6fae"
+              />
+              <div className="gptx-delta">
+                <span>
+                  RMS divisor
+                  <strong>
+                    {rmsDenominator(layer.input[selectedToken]).toFixed(3)}
+                  </strong>
+                </span>
+                <span>
+                  input norm
+                  <strong>{norm(layer.input[selectedToken]).toFixed(3)}</strong>
+                </span>
+                <span>
+                  output norm
+                  <strong>
+                    {norm(layer.normalizedAttention[selectedToken]).toFixed(3)}
+                  </strong>
+                </span>
+              </div>
+            </PanelSection>
+          )}
+
+          {selectedOperation === 'attention-residual' && (
+            <PanelSection
+              label={`coordinate-by-coordinate add · “${model.tokens[selectedToken]}”`}
+            >
+              <VectorStrip
+                label="keep x"
+                values={layer.input[selectedToken]}
+                color="#168aa1"
+              />
+              <VectorStrip
+                label="+ Δattn"
+                values={layer.attentionUpdate[selectedToken]}
+                color="#765ba7"
+              />
+              <VectorStrip
+                label="= state"
+                values={layer.afterAttention[selectedToken]}
+                color="#25896f"
+              />
+              <p className="gptx-footnote">
+                Every output cell above is the sum of the two cells directly
+                above it. Nothing is concatenated or replaced.
+              </p>
+            </PanelSection>
+          )}
+
+          {selectedOperation === 'mlp-norm' && (
+            <PanelSection
+              label={`exact token transform · “${model.tokens[selectedToken]}”`}
+            >
+              <VectorStrip
+                label="input x"
+                values={layer.afterAttention[selectedToken]}
+                color="#168aa1"
+              />
+              <VectorStrip
+                label="gain"
+                values={MODEL_WEIGHTS.layers[selectedLayer].normMlp}
+                color="#765ba7"
+              />
+              <VectorStrip
+                label="output x̂"
+                values={layer.normalizedMlp[selectedToken]}
+                color="#4f6fae"
+              />
+              <div className="gptx-delta">
+                <span>
+                  RMS divisor
+                  <strong>
+                    {rmsDenominator(
+                      layer.afterAttention[selectedToken]
+                    ).toFixed(3)}
+                  </strong>
+                </span>
+                <span>
+                  input norm
+                  <strong>
+                    {norm(layer.afterAttention[selectedToken]).toFixed(3)}
+                  </strong>
+                </span>
+                <span>
+                  output norm
+                  <strong>
+                    {norm(layer.normalizedMlp[selectedToken]).toFixed(3)}
+                  </strong>
+                </span>
+              </div>
+            </PanelSection>
+          )}
+
+          {selectedOperation === 'mlp-residual' && (
+            <PanelSection
+              label={`coordinate-by-coordinate add · “${model.tokens[selectedToken]}”`}
+            >
+              <VectorStrip
+                label="keep x"
+                values={layer.afterAttention[selectedToken]}
+                color="#168aa1"
+              />
+              <VectorStrip
+                label="+ Δmlp"
+                values={layer.mlpUpdate[selectedToken]}
+                color="#cf6258"
+              />
+              <VectorStrip
+                label="= output"
+                values={layer.output[selectedToken]}
+                color="#25896f"
+              />
+              <p className="gptx-footnote">
+                This eight-number output becomes the next block’s input.
+              </p>
+            </PanelSection>
+          )}
         </>
       )}
 
@@ -531,10 +720,27 @@ function Inspector({
               values={layer.key[selectedToken][kvHead]}
               color="#765ba7"
             />
+            <VectorStrip
+              label={`V${kvHead + 1}`}
+              values={layer.value[selectedToken][kvHead]}
+              color="#25896f"
+            />
             <p className="gptx-footnote">
               Row sum {selectedAttention.reduce((sum, value) => sum + value, 0).toFixed(3)}.
               Attention weights are mixing coefficients, not a full explanation of the model’s reasoning.
             </p>
+          </PanelSection>
+          <PanelSection label="what this head and attention write">
+            <VectorStrip
+              label="head out"
+              values={layer.attentionHeads[selectedToken][selectedHead]}
+              color={HEAD_COLORS[selectedHead]}
+            />
+            <VectorStrip
+              label="Δattn"
+              values={layer.attentionUpdate[selectedToken]}
+              color="#4f6fae"
+            />
           </PanelSection>
         </>
       )}
@@ -708,7 +914,14 @@ function Inspector({
 
       {mode === 'mlp' && (
         <>
-          <PanelSection label={`block ${selectedLayer + 1} · token “${model.tokens[selectedToken]}”`}>
+          <PanelSection
+            label={`8 numbers in · 16 gated features · 8 numbers out`}
+          >
+            <VectorStrip
+              label="input x̂"
+              values={layer.normalizedMlp[selectedToken]}
+              color="#4f6fae"
+            />
             <VectorStrip
               label="SiLU(g)"
               values={layer.gate[selectedToken].map(
@@ -718,6 +931,11 @@ function Inspector({
             />
             <VectorStrip label="up" values={layer.up[selectedToken]} color="#168aa1" />
             <VectorStrip label="product" values={layer.swiglu[selectedToken]} color="#b9811f" />
+            <VectorStrip
+              label="Δmlp"
+              values={layer.mlpUpdate[selectedToken]}
+              color="#cf6258"
+            />
           </PanelSection>
           <PanelSection label="residual write">
             <div className="gptx-delta">
@@ -879,7 +1097,6 @@ function FallbackDiagram({ model }) {
 }
 
 export default function GPTExplorer() {
-  const [labOpen, setLabOpen] = useState(false);
   const [mode, setMode] = useState('stack');
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [draftPrompt, setDraftPrompt] = useState(DEFAULT_PROMPT);
@@ -887,7 +1104,9 @@ export default function GPTExplorer() {
   const [selectedLayer, setSelectedLayer] = useState(0);
   const [selectedHead, setSelectedHead] = useState(0);
   const [selectedToken, setSelectedToken] = useState(model.tokens.length - 1);
-  const [exploded, setExploded] = useState(false);
+  const [selectedOperation, setSelectedOperation] =
+    useState('attention-norm');
+  const [exploded, setExploded] = useState(true);
   const [variant, setVariant] = useState('gqa');
   const [decodeStep, setDecodeStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -1079,6 +1298,8 @@ export default function GPTExplorer() {
     setSelectedToken(tokenizePrompt(nextPrompt).length - 1);
     setPrompt(nextPrompt);
     setMode('stack');
+    setSelectedOperation('attention-norm');
+    setExploded(true);
     setResetKey((value) => value + 1);
   };
 
@@ -1087,36 +1308,47 @@ export default function GPTExplorer() {
     setSelectedToken(tokenizePrompt(value).length - 1);
     setPrompt(value);
     setMode('stack');
+    setSelectedOperation('attention-norm');
+    setExploded(true);
     setResetKey((key) => key + 1);
   };
 
   const changeMode = (nextMode) => {
     setMode(nextMode);
+    if (nextMode === 'stack') {
+      setSelectedOperation('attention-norm');
+      setExploded(true);
+    } else if (['attention', 'rope', 'gqa', 'cache'].includes(nextMode)) {
+      setSelectedOperation('attention');
+    } else if (nextMode === 'mlp') {
+      setSelectedOperation('swiglu');
+    }
+    setResetKey((value) => value + 1);
+  };
+
+  const selectOperation = (selection) => {
+    const operation =
+      typeof selection === 'string'
+        ? BLOCK_OPERATIONS.find((candidate) => candidate.id === selection)
+        : selection;
+    if (!operation) return;
+    setSelectedOperation(operation.id);
+    setMode(operation.mode);
+    setExploded(true);
     setResetKey((value) => value + 1);
   };
 
   const matrixForScene = matrixInfo.matrix;
+  const activeOperation =
+    BLOCK_OPERATIONS.find(
+      (operation) => operation.id === selectedOperation
+    ) ?? BLOCK_OPERATIONS[0];
   const activeCopy =
-    mode === 'weights' && matrixInfo.kind === 'activation'
+    mode === 'stack' && OPERATION_COPY[selectedOperation]
+      ? OPERATION_COPY[selectedOperation]
+      : mode === 'weights' && matrixInfo.kind === 'activation'
       ? { title: 'Every major activation tensor fits' }
       : MODE_COPY[mode];
-  if (!labOpen) {
-    return (
-      <div className="gptx-theme">
-        <GPTPrimer
-          model={model}
-          onOpenLab={() => {
-            setLabOpen(true);
-            setMode('stack');
-            setExploded(false);
-            setSelectedLayer(0);
-            setSelectedToken(model.tokens.length - 1);
-            setResetKey((value) => value + 1);
-          }}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="gptx-theme">
@@ -1128,7 +1360,7 @@ export default function GPTExplorer() {
           </span>
           <span>
             <strong>Nano GPT Lab</strong>
-            <small>Advanced decoder lab</small>
+            <small>inspect each operation</small>
           </span>
         </div>
 
@@ -1152,16 +1384,6 @@ export default function GPTExplorer() {
           </SegmentedControl.Root>
         </nav>
 
-        <div className="gptx-top-actions">
-          <Button
-            type="button"
-            size="3"
-            className="gptx-tour-button"
-            onClick={() => setLabOpen(false)}
-          >
-            Start over
-          </Button>
-        </div>
       </header>
 
       <div className="gptx-prompt-row">
@@ -1216,6 +1438,7 @@ export default function GPTExplorer() {
               selectedLayer={selectedLayer}
               selectedToken={activeToken}
               selectedHead={selectedHead}
+              selectedOperation={selectedOperation}
               exploded={exploded}
               variant={variant}
               cacheTokens={cacheTokens}
@@ -1227,6 +1450,7 @@ export default function GPTExplorer() {
               onLayerSelect={setSelectedLayer}
               onTokenSelect={setSelectedToken}
               onHeadSelect={setSelectedHead}
+              onOperationSelect={selectOperation}
               onCellSelect={setSelectedCell}
               reducedMotion={reducedMotion}
               resetKey={resetKey}
@@ -1248,7 +1472,7 @@ export default function GPTExplorer() {
             </span>
             <span>
               {mode === 'stack'
-                ? `Block ${selectedLayer + 1} · token ${activeToken}`
+                ? `Block ${selectedLayer + 1} · ${activeOperation.label}`
                 : `Block ${selectedLayer + 1} · ${
                     mode === 'cache'
                       ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
@@ -1266,7 +1490,7 @@ export default function GPTExplorer() {
                 aria-pressed={exploded}
                 onClick={() => setExploded((value) => !value)}
               >
-                {exploded ? 'Close selected block' : 'Open selected block'}
+                {exploded ? 'Collapse block' : 'Expand block'}
               </Button>
             )}
             <Button
@@ -1292,6 +1516,8 @@ export default function GPTExplorer() {
           selectedLayer={selectedLayer}
           selectedHead={selectedHead}
           selectedToken={activeToken}
+          selectedOperation={selectedOperation}
+          onOperationSelect={selectOperation}
           onTokenSelect={setSelectedToken}
           variant={variant}
           onVariantChange={setVariant}
