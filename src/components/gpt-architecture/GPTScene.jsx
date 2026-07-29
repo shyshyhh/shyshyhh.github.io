@@ -6,7 +6,6 @@ import {
   Html,
   Line,
   OrbitControls,
-  RoundedBox,
 } from '@react-three/drei';
 import * as THREE from 'three';
 import {
@@ -15,16 +14,16 @@ import {
 } from './stack-scene-blueprint.mjs';
 
 const COLORS = {
-  cyan: '#168aa1',
-  blue: '#4f6fae',
-  violet: '#765ba7',
-  coral: '#cf6258',
-  gold: '#b9811f',
-  mint: '#25896f',
-  ink: '#172033',
-  dim: '#6f7d8f',
+  cyan: '#0891b2',
+  blue: '#3b82f6',
+  violet: '#7c3aed',
+  coral: '#e15a4f',
+  gold: '#c87808',
+  mint: '#059669',
+  ink: '#0f172a',
+  dim: '#8795a8',
   neutral: '#334155',
-  paper: '#f8f7f2',
+  paper: '#f8fafc',
 };
 
 export const HEAD_COLORS = [
@@ -36,11 +35,11 @@ export const HEAD_COLORS = [
 
 const CAMERA_PRESETS = {
   stack: { position: [9.4, 4.8, 13.8], target: [0, 0, 0] },
-  attention: { position: [0, 1.2, 13.5], target: [0, 0.1, 0] },
-  rope: { position: [0, 0.5, 13.2], target: [0, 0, 0] },
-  gqa: { position: [0, 0.4, 12.8], target: [0, 0, 0] },
+  attention: { position: [1.25, 1.1, 13.5], target: [0, 0.05, 0] },
+  rope: { position: [0.85, 0.75, 13.2], target: [0, 0, 0] },
+  gqa: { position: [1.05, 0.7, 12.8], target: [0, 0, 0] },
   cache: { position: [10.5, 6.8, 11.8], target: [0, 0, 0] },
-  mlp: { position: [0, 1.2, 13], target: [0, 0, 0] },
+  mlp: { position: [1.05, 1.1, 13], target: [0, 0, 0] },
   weights: { position: [9.5, 10.2, 11.8], target: [0, 0, 0] },
 };
 
@@ -79,17 +78,16 @@ function GlassBox({
 }) {
   const [hovered, setHovered] = useState(false);
   const selected = active || hovered;
-  const surfaceOpacity = selected
-    ? Math.min(0.82 + opacity * 0.18, 0.96)
-    : Math.min(0.32 + opacity * 0.82, 0.78);
+  const faceColor = new THREE.Color(color).lerp(
+    new THREE.Color('#ffffff'),
+    selected ? 0.28 : Math.max(0.46, 0.82 - opacity * 0.62)
+  );
 
   return (
-    <RoundedBox
-      args={args}
+    <mesh
       position={position}
       rotation={rotation}
-      radius={Math.min(...args) * 0.16}
-      smoothness={4}
+      scale={selected ? 1.025 : 1}
       onClick={
         onClick
           ? (event) => {
@@ -116,25 +114,21 @@ function GlassBox({
           : undefined
       }
     >
-      <meshPhysicalMaterial
-        color={color}
-        transparent
-        opacity={surfaceOpacity}
-        roughness={0.52}
+      <boxGeometry args={args} />
+      <meshStandardMaterial
+        color={faceColor}
+        roughness={0.78}
         metalness={0}
-        clearcoat={0.22}
-        clearcoatRoughness={0.62}
-        depthWrite={false}
       />
       <Edges
-        scale={1.002}
-        threshold={15}
-        color={selected ? COLORS.ink : color}
+        scale={1.001}
+        threshold={12}
+        color={selected ? color : '#728197'}
         transparent
-        opacity={selected ? 0.72 : 0.4}
+        opacity={selected ? 1 : 0.68}
       />
       {children}
-    </RoundedBox>
+    </mesh>
   );
 }
 
@@ -176,15 +170,23 @@ function DataOrb({
       }
       scale={hovered ? 1.2 : 1}
     >
-      <sphereGeometry args={[radius, 24, 24]} />
+      <boxGeometry
+        args={[radius * 1.75, radius * 1.75, Math.max(0.1, radius * 0.62)]}
+      />
       <meshStandardMaterial
-        color={color}
-        emissive={color}
-        emissiveIntensity={active ? 0.08 : 0}
-        roughness={0.38}
-        metalness={0.02}
+        color={new THREE.Color(color).lerp(
+          new THREE.Color('#ffffff'),
+          active ? 0.18 : 0.56
+        )}
+        roughness={0.72}
+        metalness={0}
+      />
+      <Edges
+        scale={1.001}
+        threshold={12}
+        color={active ? color : '#728197'}
         transparent
-        opacity={active ? 0.98 : 0.48}
+        opacity={active ? 1 : 0.72}
       />
     </mesh>
   );
@@ -494,17 +496,24 @@ function AttentionScene({
   const xForToken = (index) => (index - (tokens.length - 1) / 2) * spacing;
   const xForHead = (index) =>
     (index - (model.config.queryHeads - 1) / 2) * 1.55;
+  const queryDepth = 0.9;
+  const headDepth = 0.2;
+  const tokenDepth = -0.72;
 
   return (
     <group>
-      <SceneLabel position={[0, 3.35, 0]} tone="muted">
+      <SceneLabel position={[0, 3.35, queryDepth]} tone="muted">
         query from “{tokens[selectedToken]}”
       </SceneLabel>
-      <DataOrb position={[0, 2.9, 0]} color={COLORS.neutral} radius={0.22} />
+      <DataOrb
+        position={[0, 2.9, queryDepth]}
+        color={COLORS.neutral}
+        radius={0.22}
+      />
       <Line
         points={[
-          [0, 2.68, 0],
-          [0, 2.25, 0],
+          [0, 2.68, queryDepth],
+          [0, 2.25, headDepth],
         ]}
         color={COLORS.neutral}
         transparent
@@ -518,8 +527,8 @@ function AttentionScene({
           <group key={`head-${head}`}>
             <Line
               points={[
-                [0, 2.25, 0],
-                [headX, 1.65, 0],
+                [0, 2.25, queryDepth],
+                [headX, 1.65, headDepth],
               ]}
               color={HEAD_COLORS[head]}
               transparent
@@ -527,14 +536,14 @@ function AttentionScene({
               lineWidth={active ? 1.5 : 0.65}
             />
             <DataOrb
-              position={[headX, 1.55, 0]}
+              position={[headX, 1.55, headDepth]}
               color={HEAD_COLORS[head]}
               radius={active ? 0.25 : 0.16}
               active={active}
               onClick={() => onHeadSelect(head)}
             />
             <SceneLabel
-              position={[headX, 1.05, 0]}
+              position={[headX, 1.05, headDepth]}
               tone={active ? 'active' : 'muted'}
             >
               Q{head + 1}
@@ -549,8 +558,8 @@ function AttentionScene({
                 <Line
                   key={`edge-${head}-${keyPosition}`}
                   points={[
-                    [headX, 1.33, 0],
-                    [xForToken(keyPosition), -1.65, 0],
+                    [headX, 1.33, headDepth],
+                    [xForToken(keyPosition), -1.65, tokenDepth],
                   ]}
                   color={HEAD_COLORS[head]}
                   transparent
@@ -571,7 +580,7 @@ function AttentionScene({
           <group key={`key-${token}-${tokenIndex}`}>
             <GlassBox
               args={[0.78, 0.34, 0.78]}
-              position={[xForToken(tokenIndex), -1.9, 0]}
+              position={[xForToken(tokenIndex), -1.9, tokenDepth]}
               color={
                 future
                   ? COLORS.dim
@@ -584,13 +593,13 @@ function AttentionScene({
               onClick={() => onTokenSelect(tokenIndex)}
             />
             <SceneLabel
-              position={[xForToken(tokenIndex), -2.45, 0]}
+              position={[xForToken(tokenIndex), -2.45, tokenDepth]}
               tone={future ? 'muted' : tokenIndex === selectedToken ? 'active' : 'normal'}
             >
               {token}
             </SceneLabel>
             <SceneLabel
-              position={[xForToken(tokenIndex), -1.47, 0]}
+              position={[xForToken(tokenIndex), -1.47, tokenDepth]}
               tone={future ? 'muted' : 'active'}
             >
               {future ? 'masked' : `${Math.round(weight * 100)}%`}
@@ -601,8 +610,8 @@ function AttentionScene({
 
       <Line
         points={[
-          [xForToken(selectedToken) + 0.45, -2.9, 0],
-          [xForToken(tokens.length - 1) + 0.45, -2.9, 0],
+          [xForToken(selectedToken) + 0.45, -2.9, tokenDepth],
+          [xForToken(tokens.length - 1) + 0.45, -2.9, tokenDepth],
         ]}
         color={COLORS.coral}
         transparent
@@ -614,7 +623,7 @@ function AttentionScene({
           position={[
             (xForToken(selectedToken) + xForToken(tokens.length - 1)) / 2,
             -3.18,
-            0,
+            tokenDepth,
           ]}
           tone="muted"
         >
@@ -744,10 +753,12 @@ function GQAScene({ variant, selectedHead, onHeadSelect }) {
   const groupSize = queryHeads / kvHeads;
   const queryX = (index) => (index - (queryHeads - 1) / 2) * 1.65;
   const kvX = (index) => (index - (kvHeads - 1) / 2) * 2.35;
+  const queryDepth = 0.62;
+  const memoryDepth = -0.52;
 
   return (
     <group>
-      <SceneLabel position={[0, 3, 0]} tone="muted">
+      <SceneLabel position={[0, 3, queryDepth]} tone="muted">
         four independent queries
       </SceneLabel>
       {Array.from({ length: queryHeads }, (_, head) => {
@@ -755,22 +766,22 @@ function GQAScene({ variant, selectedHead, onHeadSelect }) {
         return (
           <group key={`query-${head}`}>
             <DataOrb
-              position={[queryX(head), 2.15, 0]}
+              position={[queryX(head), 2.15, queryDepth]}
               color={HEAD_COLORS[head]}
               radius={head === selectedHead ? 0.28 : 0.19}
               active={head === selectedHead}
               onClick={() => onHeadSelect(head)}
             />
             <SceneLabel
-              position={[queryX(head), 2.65, 0]}
+              position={[queryX(head), 2.65, queryDepth]}
               tone={head === selectedHead ? 'active' : 'muted'}
             >
               Q{head + 1}
             </SceneLabel>
             <Line
               points={[
-                [queryX(head), 1.92, 0],
-                [kvX(kvHead), -1.65, 0],
+                [queryX(head), 1.92, queryDepth],
+                [kvX(kvHead), -1.65, memoryDepth],
               ]}
               color={HEAD_COLORS[head]}
               transparent
@@ -785,18 +796,18 @@ function GQAScene({ variant, selectedHead, onHeadSelect }) {
         <group key={`kv-${head}`}>
           <GlassBox
             args={[1.22, 0.62, 1.05]}
-            position={[kvX(head), -1.95, 0]}
+            position={[kvX(head), -1.95, memoryDepth]}
             color={kvHeads === 1 ? COLORS.gold : COLORS.violet}
             active={Math.floor(selectedHead / groupSize) === head}
             opacity={0.32}
           />
-          <SceneLabel position={[kvX(head), -1.9, 0]} tone="active">
+          <SceneLabel position={[kvX(head), -1.9, memoryDepth]} tone="active">
             K{head + 1} / V{head + 1}
           </SceneLabel>
         </group>
       ))}
 
-      <SceneLabel position={[0, -3, 0]} tone="muted">
+      <SceneLabel position={[0, -3, memoryDepth]} tone="muted">
         {variant === 'mha'
           ? 'MHA · one memory per query'
           : variant === 'mqa'
@@ -920,13 +931,18 @@ function FeatureBank({ values, position, color, label }) {
           >
             <boxGeometry args={[0.16, height, 0.32]} />
             <meshStandardMaterial
+              color={new THREE.Color(
+                value >= 0 ? color : COLORS.coral
+              ).lerp(new THREE.Color('#ffffff'), 0.28)}
+              roughness={0.74}
+              metalness={0}
+            />
+            <Edges
+              scale={1.001}
+              threshold={12}
               color={value >= 0 ? color : COLORS.coral}
-              emissive={value >= 0 ? color : COLORS.coral}
-              emissiveIntensity={0.025}
-              roughness={0.48}
-              metalness={0.01}
               transparent
-              opacity={0.9}
+              opacity={0.88}
             />
           </mesh>
         );
@@ -1155,22 +1171,21 @@ function World({
   return (
     <>
       <color attach="background" args={[COLORS.paper]} />
-      <fog attach="fog" args={[COLORS.paper, 15, 34]} />
       <hemisphereLight
-        intensity={0.92}
+        intensity={0.72}
         color="#ffffff"
-        groundColor="#d8d9d4"
+        groundColor="#dce3eb"
       />
-      <ambientLight intensity={0.54} color="#fffefb" />
+      <ambientLight intensity={0.78} color="#ffffff" />
       <directionalLight
-        position={[7, 10, 8]}
-        intensity={1.55}
-        color="#fffdf8"
+        position={[6, 9, 12]}
+        intensity={1.85}
+        color="#ffffff"
       />
       <directionalLight
-        position={[-7, 3, 5]}
-        intensity={0.58}
-        color="#dbe7f2"
+        position={[-7, 2, 7]}
+        intensity={0.42}
+        color="#dcecff"
       />
 
       <group>
@@ -1329,7 +1344,7 @@ export default function GPTScene(props) {
       <Canvas
         camera={{
           position: CAMERA_PRESETS.stack.position,
-          fov: 43,
+          fov: 40,
           near: 0.1,
           far: 80,
         }}
@@ -1338,7 +1353,7 @@ export default function GPTScene(props) {
           antialias: true,
           alpha: false,
           powerPreference: 'high-performance',
-          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMapping: THREE.NoToneMapping,
         }}
         onPointerMissed={() => setPointer(false)}
       >

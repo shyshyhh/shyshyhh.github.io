@@ -304,6 +304,161 @@ function BlockOperationNav({
   );
 }
 
+function BlockTrace2D({
+  model,
+  selectedLayer,
+  selectedToken,
+  selectedOperation,
+  onLayerSelect,
+  onTokenSelect,
+  onOperationSelect,
+}) {
+  const layer = model.layers[selectedLayer];
+  const operationRows = [
+    {
+      ...BLOCK_OPERATIONS[0],
+      outputLabel: 'normalized state',
+      values: layer.normalizedAttention[selectedToken],
+    },
+    {
+      ...BLOCK_OPERATIONS[1],
+      outputLabel: 'attention change Δ',
+      values: layer.attentionUpdate[selectedToken],
+    },
+    {
+      ...BLOCK_OPERATIONS[2],
+      outputLabel: 'state after attention',
+      values: layer.afterAttention[selectedToken],
+    },
+    {
+      ...BLOCK_OPERATIONS[3],
+      outputLabel: 'normalized state',
+      values: layer.normalizedMlp[selectedToken],
+    },
+    {
+      ...BLOCK_OPERATIONS[4],
+      outputLabel: 'MLP change Δ',
+      values: layer.mlpUpdate[selectedToken],
+    },
+    {
+      ...BLOCK_OPERATIONS[5],
+      outputLabel: 'block output',
+      values: layer.output[selectedToken],
+    },
+  ];
+
+  const numericVector = (values, label) => (
+    <div className="gptx-trace-vector" aria-label={label}>
+      {values.map((value, index) => (
+        <span
+          key={`${label}-${index}`}
+          className={value < 0 ? 'is-negative' : ''}
+          aria-label={`dimension ${index}: ${value}`}
+        >
+          <small>d{index}</small>
+          <strong>{signed(value, 2)}</strong>
+        </span>
+      ))}
+    </div>
+  );
+
+  return (
+    <section
+      className="gptx-block-trace"
+      aria-label={`Block ${selectedLayer + 1} computation for token ${model.tokens[selectedToken]}`}
+      data-axis-contract="compute=top-to-bottom"
+      data-selected-operation={selectedOperation}
+      data-vector-size="8"
+    >
+      <header>
+        <div>
+          <span>Exact forward pass</span>
+          <strong>
+            Block {selectedLayer + 1} · token “{model.tokens[selectedToken]}”
+          </strong>
+        </div>
+        <p>
+          Read downward. <code>state</code> is this token’s 8-number
+          scratchpad; <code>d0–d7</code> are its slots. <code>Δ</code> means
+          a proposed change.
+        </p>
+      </header>
+
+      <div className="gptx-trace-selectors">
+        <div>
+          <span>Token</span>
+          {model.tokens.map((token, index) => (
+            <button
+              type="button"
+              key={`${token}-${index}`}
+              className={selectedToken === index ? 'is-selected' : ''}
+              aria-pressed={selectedToken === index}
+              onClick={() => onTokenSelect(index)}
+            >
+              {token}
+            </button>
+          ))}
+        </div>
+        <div>
+          <span>Block</span>
+          {model.layers.map((_, index) => (
+            <button
+              type="button"
+              key={index}
+              className={selectedLayer === index ? 'is-selected' : ''}
+              aria-label={`Trace block ${index + 1}`}
+              aria-pressed={selectedLayer === index}
+              onClick={() => onLayerSelect(index)}
+            >
+              {index + 1}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="gptx-trace-input">
+        <div>
+          <span>Input</span>
+          <strong>residual state</strong>
+          <small>the 8 numbers entering this block</small>
+        </div>
+        {numericVector(
+          layer.input[selectedToken],
+          `Block ${selectedLayer + 1} input`
+        )}
+      </div>
+
+      <ol className="gptx-trace-operations">
+        {operationRows.map((operation, index) => (
+          <li key={operation.id}>
+            <button
+              type="button"
+              className={
+                selectedOperation === operation.id ? 'is-selected' : ''
+              }
+              aria-pressed={selectedOperation === operation.id}
+              onClick={() => onOperationSelect(operation)}
+            >
+              <div>
+                <span>Step {index + 1}</span>
+                <strong>{operation.label}</strong>
+                <small>{operation.detail}</small>
+              </div>
+              <div>
+                <small>{operation.outputLabel}</small>
+                {numericVector(
+                  operation.values,
+                  `${operation.label} ${operation.outputLabel}`
+                )}
+              </div>
+            </button>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 function VectorStrip({ label, values, color = '#168aa1', limit }) {
   const shown = values.slice(0, limit ?? values.length);
   const maximum = Math.max(...shown.map((value) => Math.abs(value)), 0.001);
@@ -540,7 +695,7 @@ function Inspector({
 
   return (
     <aside className="gptx-inspector">
-      {mode !== 'weights' && (
+      {mode !== 'weights' && mode !== 'stack' && (
         <BlockOperationNav
           selectedLayer={selectedLayer}
           selectedOperation={selectedOperation}
@@ -1106,7 +1261,6 @@ export default function GPTExplorer() {
   const [selectedToken, setSelectedToken] = useState(model.tokens.length - 1);
   const [selectedOperation, setSelectedOperation] =
     useState('attention-norm');
-  const [exploded, setExploded] = useState(true);
   const [variant, setVariant] = useState('gqa');
   const [decodeStep, setDecodeStep] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -1299,7 +1453,6 @@ export default function GPTExplorer() {
     setPrompt(nextPrompt);
     setMode('stack');
     setSelectedOperation('attention-norm');
-    setExploded(true);
     setResetKey((value) => value + 1);
   };
 
@@ -1309,7 +1462,6 @@ export default function GPTExplorer() {
     setPrompt(value);
     setMode('stack');
     setSelectedOperation('attention-norm');
-    setExploded(true);
     setResetKey((key) => key + 1);
   };
 
@@ -1317,7 +1469,6 @@ export default function GPTExplorer() {
     setMode(nextMode);
     if (nextMode === 'stack') {
       setSelectedOperation('attention-norm');
-      setExploded(true);
     } else if (['attention', 'rope', 'gqa', 'cache'].includes(nextMode)) {
       setSelectedOperation('attention');
     } else if (nextMode === 'mlp') {
@@ -1334,15 +1485,10 @@ export default function GPTExplorer() {
     if (!operation) return;
     setSelectedOperation(operation.id);
     setMode(operation.mode);
-    setExploded(true);
     setResetKey((value) => value + 1);
   };
 
   const matrixForScene = matrixInfo.matrix;
-  const activeOperation =
-    BLOCK_OPERATIONS.find(
-      (operation) => operation.id === selectedOperation
-    ) ?? BLOCK_OPERATIONS[0];
   const activeCopy =
     mode === 'stack' && OPERATION_COPY[selectedOperation]
       ? OPERATION_COPY[selectedOperation]
@@ -1431,7 +1577,17 @@ export default function GPTExplorer() {
 
       <div className="gptx-main">
         <div className="gptx-stage">
-          {hasWebGL ? (
+          {mode === 'stack' ? (
+            <BlockTrace2D
+              model={model}
+              selectedLayer={selectedLayer}
+              selectedToken={activeToken}
+              selectedOperation={selectedOperation}
+              onLayerSelect={setSelectedLayer}
+              onTokenSelect={setSelectedToken}
+              onOperationSelect={selectOperation}
+            />
+          ) : hasWebGL ? (
             <GPTScene
               mode={mode}
               model={model}
@@ -1439,7 +1595,6 @@ export default function GPTExplorer() {
               selectedToken={activeToken}
               selectedHead={selectedHead}
               selectedOperation={selectedOperation}
-              exploded={exploded}
               variant={variant}
               cacheTokens={cacheTokens}
               prefillCount={model.tokens.length}
@@ -1464,50 +1619,35 @@ export default function GPTExplorer() {
             <FallbackDiagram model={model} />
           )}
 
-          <div className="gptx-stage-hud gptx-stage-hud--top">
-            <span>
-              {mode === 'stack'
-                ? 'tokens → · compute ↓'
-                : 'Live trained model'}
-            </span>
-            <span>
-              {mode === 'stack'
-                ? `Block ${selectedLayer + 1} · ${activeOperation.label}`
-                : `Block ${selectedLayer + 1} · ${
-                    mode === 'cache'
-                      ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
-                      : `Head ${selectedHead + 1}`
-                  } · Token ${activeToken}`}
-            </span>
-          </div>
-          <div className="gptx-stage-toolbar" aria-label="3D view controls">
-            {mode === 'stack' && (
-              <Button
-                type="button"
-                size="2"
-                variant="surface"
-                className={exploded ? 'is-selected' : ''}
-                aria-pressed={exploded}
-                onClick={() => setExploded((value) => !value)}
-              >
-                {exploded ? 'Collapse block' : 'Expand block'}
-              </Button>
-            )}
-            <Button
-              type="button"
-              size="2"
-              variant="surface"
-              onClick={() => setResetKey((value) => value + 1)}
-              aria-label="Reset 3D camera"
-            >
-              Reset view
-            </Button>
-          </div>
-          <div className="gptx-drag-hint">
-            <span aria-hidden="true">↻</span>
-            Drag to orbit · scroll to zoom · click to inspect
-          </div>
-
+          {mode !== 'stack' && (
+            <>
+              <div className="gptx-stage-hud gptx-stage-hud--top">
+                <span>Live trained model</span>
+                <span>
+                  Block {selectedLayer + 1} ·{' '}
+                  {mode === 'cache'
+                    ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
+                    : `Head ${selectedHead + 1}`}{' '}
+                  · Token {activeToken}
+                </span>
+              </div>
+              <div className="gptx-stage-toolbar" aria-label="3D view controls">
+                <Button
+                  type="button"
+                  size="2"
+                  variant="surface"
+                  onClick={() => setResetKey((value) => value + 1)}
+                  aria-label="Reset 3D camera"
+                >
+                  Reset view
+                </Button>
+              </div>
+              <div className="gptx-drag-hint">
+                <span aria-hidden="true">↻</span>
+                Drag to orbit · scroll to zoom · click to inspect
+              </div>
+            </>
+          )}
         </div>
 
         <Inspector

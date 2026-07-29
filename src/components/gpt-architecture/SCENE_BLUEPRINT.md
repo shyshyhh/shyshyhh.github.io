@@ -1,8 +1,30 @@
-# GPT stack scene blueprint
+# GPT visualization inspection contracts
 
-The stack view is data before it is WebGL. Its source of truth is
-`stack-scene-blueprint.mjs`; `GPTScene.jsx` only turns that data into Three.js
-objects.
+## Primary block trace
+
+The default block view is intentionally DOM, not WebGL. It exposes the live
+computation as one input row followed by six operation rows. Every row contains
+the full eight-number state for the selected token.
+
+Tests can inspect it without screenshots:
+
+```css
+.gptx-block-trace[data-axis-contract="compute=top-to-bottom"]
+.gptx-block-trace[data-vector-size="8"]
+.gptx-block-trace[data-selected-operation]
+.gptx-trace-operations > li
+.gptx-trace-vector > span
+```
+
+The selected token and block are ordinary buttons. Clicking Attention or
+SwiGLU opens the corresponding spatial lab; the primary forward-pass
+explanation itself remains flat and literal.
+
+## Legacy stack geometry contract
+
+`stack-scene-blueprint.mjs` remains the inspectable specification for the old
+3D stack and a regression fixture for layout rules. It is not mounted in the
+default block view.
 
 ## Spatial contract
 
@@ -21,7 +43,7 @@ sequence:
 5. SwiGLU
 6. residual add
 
-Exactly one operation carries `selected: true`, and its stable
+Exactly one blueprint operation carries `selected: true`, and its stable
 `operationId` is also stored at `selection.operationId`. The rendered canvas
 mirrors it in `data-selected-operation`, so tests can verify both the geometry
 and the active drill-down without reading pixels.
@@ -47,18 +69,6 @@ token count:
 npm run check:scene
 ```
 
-The hydrated page embeds the lossless current scene and its front elevation in:
-
-```css
-script[data-gptx-scene-blueprint="full"]
-script[data-gptx-scene-blueprint="front-elevation"]
-```
-
-and exposes the directional axis contract
-`x=sequence-right;y=compute-down;z=parallel-branches` on
-`.gptx-canvas[data-axis-contract]`. Browser
-tests can inspect those values without reading pixels or manipulating the
-camera.
-
 Screenshots remain useful for presentation-only problems such as label
-collisions. They are not needed to verify geometry or flow semantics.
+collisions. They are not needed to verify the default trace’s order, values, or
+selection state.

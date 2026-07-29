@@ -449,14 +449,271 @@
 .gptx-stage::after {
   position: absolute;
   z-index: 2;
-  inset: 0;
-  content: '';
-  background-image:
-    linear-gradient(rgba(71, 85, 105, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(71, 85, 105, 0.035) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), transparent 88%);
-  pointer-events: none;
+  display: none;
+}
+
+.gptx-shell--stack .gptx-stage::after {
+  display: none;
+}
+
+/* The block overview is deliberately literal: one row per operation, with the
+   exact eight-number state shown after every step. */
+
+.gptx-block-trace {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  padding: 20px 22px 24px;
+  overflow-y: auto;
+  color: var(--gptx-text);
+  background: #fbfcfd;
+  letter-spacing: -0.01em;
+  scrollbar-color: #cbd2da transparent;
+  scrollbar-width: thin;
+}
+
+.gptx-block-trace > header {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.gptx-block-trace > header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.gptx-block-trace > header span,
+.gptx-trace-selectors > div > span,
+.gptx-trace-input > div > span {
+  color: var(--gptx-faint);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.gptx-block-trace > header > div > span {
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+}
+
+.gptx-block-trace > header strong {
+  font-size: 21px;
+  font-weight: 650;
+}
+
+.gptx-block-trace > header p {
+  max-width: 330px;
+  margin: 0;
+  color: var(--gptx-muted);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.gptx-block-trace > header code {
+  color: #244164;
+  font-family: 'Geist Mono Variable', ui-monospace, monospace;
+  font-size: 0.94em;
+  font-weight: 650;
+}
+
+.gptx-trace-selectors {
+  display: flex;
+  gap: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 0 13px;
+  border-bottom: 1px solid var(--gptx-line);
+}
+
+.gptx-trace-selectors > div {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.gptx-trace-selectors > div > span {
+  margin-right: 4px;
+}
+
+.gptx-trace-selectors button {
+  display: grid;
+  min-width: 34px;
+  min-height: 34px;
+  place-items: center;
+  padding: 5px 9px;
+  color: var(--gptx-muted);
+  border: 1px solid var(--gptx-line);
+  border-radius: 8px;
+  background: #ffffff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gptx-trace-selectors button:hover,
+.gptx-trace-selectors button.is-selected {
+  color: #164ea6;
+  border-color: #b9cdf8;
+  background: var(--gptx-surface-blue);
+}
+
+.gptx-trace-input,
+.gptx-trace-operations button {
+  display: grid;
+  grid-template-columns: 170px minmax(0, 1fr);
+  gap: 16px;
+  align-items: center;
+}
+
+.gptx-trace-input {
+  min-height: 69px;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--gptx-line);
+}
+
+.gptx-trace-input > div,
+.gptx-trace-operations button > div {
+  min-width: 0;
+}
+
+.gptx-trace-input > div:first-child,
+.gptx-trace-operations button > div:first-child {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 2px 8px;
+  align-items: center;
+}
+
+.gptx-trace-input > div:first-child > small,
+.gptx-trace-operations button > div:first-child > small {
+  grid-column: 2;
+  color: var(--gptx-faint);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.gptx-trace-input > div:first-child > strong,
+.gptx-trace-operations button > div:first-child > strong {
+  color: var(--gptx-text);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.gptx-trace-operations {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gptx-trace-operations li {
+  border-bottom: 1px solid var(--gptx-line);
+}
+
+.gptx-trace-operations button {
+  width: 100%;
+  min-height: 76px;
+  padding: 8px 10px;
+  color: inherit;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.gptx-trace-operations button:hover {
+  border-color: #d5dfef;
+  background: #f6f9fd;
+}
+
+.gptx-trace-operations button.is-selected {
+  border-color: #c7d7f7;
+  background: var(--gptx-surface-blue);
+  box-shadow: inset 3px 0 var(--gptx-blue);
+}
+
+.gptx-trace-operations button > div:first-child > span {
+  display: inline-grid;
+  min-height: 25px;
+  place-items: center;
+  padding: 4px 6px;
+  color: #36516f;
+  border-radius: 6px;
+  background: #e9eef5;
+  font-family: 'Geist Mono Variable', ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1;
+}
+
+.gptx-trace-operations button.is-selected > div:first-child > span {
+  color: #164ea6;
+  background: #dfeaff;
+}
+
+.gptx-trace-operations button > div:last-child {
+  display: grid;
+  gap: 5px;
+}
+
+.gptx-trace-operations button > div:last-child > small {
+  color: var(--gptx-faint);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.gptx-trace-vector {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(44px, 1fr));
+  gap: 4px;
+  min-width: 0;
+}
+
+.gptx-trace-vector > span {
+  display: grid;
+  min-width: 0;
+  min-height: 43px;
+  place-content: center;
+  gap: 1px;
+  overflow: hidden;
+  color: #244164;
+  border: 1px solid #c9d8e8;
+  border-radius: 7px;
+  background: #eef5fb;
+  font-family: 'Geist Mono Variable', ui-monospace, monospace;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.gptx-trace-vector > span.is-negative {
+  color: #854a45;
+  border-color: #e7cbc8;
+  background: #fcf1ef;
+}
+
+.gptx-trace-vector > span small {
+  color: currentColor;
+  font-size: 10px;
+  font-weight: 550;
+  line-height: 1;
+  opacity: 0.64;
+}
+
+.gptx-trace-vector > span strong {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.1;
 }
 
 .gptx-canvas {
@@ -470,6 +727,11 @@
   width: 100% !important;
   height: 100% !important;
   touch-action: pan-y;
+  cursor: grab;
+}
+
+.gptx-canvas canvas:active {
+  cursor: grabbing;
 }
 
 .gptx-world-label {
@@ -477,14 +739,14 @@
   align-items: center;
   min-height: 30px;
   padding: 7px 10px;
-  color: #243046;
-  border: 1px solid rgba(148, 163, 184, 0.42);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 4px 12px rgba(30, 41, 59, 0.09);
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.07);
   font-family: 'Geist Mono Variable', ui-monospace, monospace;
   font-size: 13px;
-  font-weight: 520;
+  font-weight: 600;
   letter-spacing: 0;
   line-height: 1;
   white-space: nowrap;
@@ -492,14 +754,14 @@
 
 .gptx-world-label--active {
   color: #164ea6;
-  border-color: rgba(37, 99, 235, 0.42);
-  background: #f4f8ff;
+  border-color: #93b4f3;
+  background: #f7faff;
 }
 
 .gptx-world-label--muted {
-  color: #66758a;
-  border-color: rgba(148, 163, 184, 0.28);
-  background: rgba(255, 255, 255, 0.88);
+  color: #5f6f83;
+  border-color: #d8e0e8;
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .gptx-stage-hud {
@@ -1634,6 +1896,12 @@
     border-bottom: 1px solid var(--gptx-line);
   }
 
+  .gptx-shell--stack .gptx-stage,
+  .gptx-shell--stack .gptx-block-trace {
+    height: auto;
+    overflow: visible;
+  }
+
   .gptx-inspector {
     max-height: none;
     overflow: visible;
@@ -1716,6 +1984,52 @@
 
   .gptx-stage {
     height: 520px;
+  }
+
+  .gptx-block-trace {
+    padding: 18px 14px 22px;
+  }
+
+  .gptx-block-trace > header {
+    display: grid;
+    gap: 8px;
+  }
+
+  .gptx-block-trace > header p {
+    max-width: none;
+  }
+
+  .gptx-trace-selectors {
+    display: grid;
+    justify-content: stretch;
+  }
+
+  .gptx-trace-selectors > div {
+    flex-wrap: wrap;
+  }
+
+  .gptx-trace-input,
+  .gptx-trace-operations button {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding-block: 12px;
+  }
+
+  .gptx-trace-input > div:first-child,
+  .gptx-trace-operations button > div:first-child {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+
+  .gptx-trace-vector {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .gptx-trace-vector > span {
+    min-height: 45px;
+  }
+
+  .gptx-trace-vector > span strong {
+    font-size: 13px;
   }
 
   .gptx-stage-hud--top {
