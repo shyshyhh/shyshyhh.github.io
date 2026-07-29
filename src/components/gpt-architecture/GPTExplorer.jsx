@@ -85,7 +85,7 @@ const TOUR = [
   {
     mode: 'stack',
     title: 'Start with the scratchpad',
-    body: 'Each token owns an 8-number residual stream. Open the stack and follow one token through all four blocks.',
+    body: 'Each token owns an 8-number residual stream. Open one block and follow the same token upward through every operation.',
     exploded: true,
   },
   {
@@ -1294,20 +1294,28 @@ export default function GPTExplorer() {
               resetKey={resetKey}
               accessibleLabel={`${activeCopy.title}. Selected layer ${
                 selectedLayer + 1
-              }, token ${model.tokens[activeToken]}, head ${selectedHead + 1}.`}
+              }, token ${model.tokens[activeToken]}, head ${
+                selectedHead + 1
+              }. In the stack view, sequence runs left to right and compute runs bottom to top.`}
             />
           ) : (
             <FallbackDiagram model={model} />
           )}
 
           <div className="gptx-stage-hud gptx-stage-hud--top">
-            <span>Live trained model</span>
             <span>
-              Layer {selectedLayer + 1} ·{' '}
-              {mode === 'cache'
-                ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
-                : `Head ${selectedHead + 1}`}{' '}
-              · Token {activeToken}
+              {mode === 'stack'
+                ? 'tokens → · compute ↑'
+                : 'Live trained model'}
+            </span>
+            <span>
+              {mode === 'stack'
+                ? `L${selectedLayer + 1} · token ${activeToken}`
+                : `Layer ${selectedLayer + 1} · ${
+                    mode === 'cache'
+                      ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
+                      : `Head ${selectedHead + 1}`
+                  } · Token ${activeToken}`}
             </span>
           </div>
           <div className="gptx-stage-toolbar" aria-label="3D view controls">
@@ -1320,7 +1328,7 @@ export default function GPTExplorer() {
                 aria-pressed={exploded}
                 onClick={() => setExploded((value) => !value)}
               >
-                {exploded ? 'Collapse layers' : 'Expand layers'}
+                {exploded ? 'Close selected block' : 'Open selected block'}
               </Button>
             )}
             <Button

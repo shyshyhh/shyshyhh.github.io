@@ -7,7 +7,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check:nano": "node scripts/check-nano-gpt.mjs"
+    "check:nano": "node scripts/check-nano-gpt.mjs",
+    "check:scene": "node scripts/check-gpt-scene.mjs",
+    "inspect:scene": "node scripts/inspect-gpt-scene.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^3.6.3",

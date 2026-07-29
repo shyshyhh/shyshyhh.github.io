@@ -1630,11 +1630,15 @@
   }
 
   .gptx-stage-hud--top {
-    top: 12px;
+    top: 58px;
     left: 12px;
   }
 
   .gptx-stage-hud span:first-child {
+    display: block;
+  }
+
+  .gptx-stage-hud span:last-child {
     display: none;
   }
 
@@ -1658,6 +1662,10 @@
     min-height: 27px;
     padding: 6px 8px;
     font-size: 13px;
+  }
+
+  .gptx-world-label--axis {
+    display: none;
   }
 
   .gptx-inspector {
@@ -1725,7 +1733,7 @@
   }
 
   .gptx-stage-hud--top {
-    display: none;
+    display: flex;
   }
 
   .gptx-stage-toolbar {

@@ -9,6 +9,10 @@ import {
   RoundedBox,
 } from '@react-three/drei';
 import * as THREE from 'three';
+import {
+  buildStackSceneBlueprint,
+  projectStackSceneTo2D,
+} from './stack-scene-blueprint.mjs';
 
 const COLORS = {
   cyan: '#168aa1',
@@ -31,7 +35,7 @@ export const HEAD_COLORS = [
 ];
 
 const CAMERA_PRESETS = {
-  stack: { position: [10.5, 7.2, 12.5], target: [0, 0, 0] },
+  stack: { position: [9.4, 4.8, 13.8], target: [0, 0, 0] },
   attention: { position: [0, 1.2, 13.5], target: [0, 0.1, 0] },
   rope: { position: [0, 0.5, 13.2], target: [0, 0, 0] },
   gqa: { position: [0, 0.4, 12.8], target: [0, 0, 0] },
@@ -228,7 +232,15 @@ function CameraRig({ mode, resetKey, controls, reducedMotion }) {
   return null;
 }
 
-function FlowOrb({ x, minimum, maximum, color, reducedMotion }) {
+function FlowOrb({
+  x,
+  minimum,
+  maximum,
+  color,
+  radius = 0.16,
+  depth = 0.3,
+  reducedMotion,
+}) {
   const ref = useRef();
   useFrame(({ clock }) => {
     if (!ref.current) return;
@@ -241,8 +253,8 @@ function FlowOrb({ x, minimum, maximum, color, reducedMotion }) {
   });
 
   return (
-    <mesh ref={ref} position={[x, minimum, 0.3]}>
-      <sphereGeometry args={[0.16, 20, 20]} />
+    <mesh ref={ref} position={[x, minimum, depth]}>
+      <sphereGeometry args={[radius, 20, 20]} />
       <meshStandardMaterial
         color={color}
         emissive={color}
@@ -257,106 +269,153 @@ function FlowOrb({ x, minimum, maximum, color, reducedMotion }) {
 
 function StackScene({
   model,
+  blueprint,
   selectedLayer,
   selectedToken,
-  exploded,
   onLayerSelect,
   onTokenSelect,
   reducedMotion,
 }) {
-  const { tokens, layers } = model;
-  const spacing = Math.min(1.08, 6.2 / Math.max(tokens.length - 1, 1));
-  const tokenX = (index) => (index - (tokens.length - 1) / 2) * spacing;
-  const layerGap = exploded ? 2.35 : 1.55;
-  const bottom = -((layers.length - 1) * layerGap) / 2;
-  const layerY = (index) => bottom + index * layerGap;
-  const plateWidth = Math.max(6.5, tokens.length * spacing + 1.5);
+  const { layers } = model;
+  const scene = blueprint;
   const selectedOutput = layers[selectedLayer].output;
-  const maxNorm = Math.max(
-    ...layers.flatMap((layer) => layer.norms.output),
-    0.001
-  );
-  const operationRail = [
-    { label: 'RMS', z: 2.45, color: COLORS.blue },
-    { label: 'ATTN', z: 1.48, color: COLORS.violet },
-    { label: '+', z: 0.5, color: COLORS.cyan },
-    { label: 'RMS', z: -0.5, color: COLORS.blue },
-    { label: 'SWIGLU', z: -1.48, color: COLORS.coral },
-    { label: '+', z: -2.45, color: COLORS.mint },
-  ];
 
   return (
     <group>
-      {tokens.map((token, tokenIndex) => (
-        <React.Fragment key={`rail-${token}-${tokenIndex}`}>
-          <Line
-            points={[
-              [tokenX(tokenIndex), bottom - 1.15, 0],
-              [tokenX(tokenIndex), layerY(layers.length - 1) + 1.3, 0],
-            ]}
-            color={tokenIndex === selectedToken ? COLORS.cyan : COLORS.dim}
-            transparent
-            opacity={tokenIndex === selectedToken ? 0.72 : 0.17}
-            lineWidth={tokenIndex === selectedToken ? 1.8 : 0.7}
-          />
-          <SceneLabel
-            position={[tokenX(tokenIndex), bottom - 1.45, 0]}
-            tone={tokenIndex === selectedToken ? 'active' : 'muted'}
-          >
-            {token}
-          </SceneLabel>
-          <DataOrb
-            position={[tokenX(tokenIndex), bottom - 1.05, 0]}
-            color={tokenIndex === selectedToken ? COLORS.cyan : COLORS.blue}
-            radius={tokenIndex === selectedToken ? 0.16 : 0.11}
-            active={tokenIndex === selectedToken}
-            onClick={() => onTokenSelect(tokenIndex)}
-          />
-        </React.Fragment>
-      ))}
+      {scene.tokens.map((tokenNode) => {
+        const rail = scene.rails[tokenNode.index];
+        return (
+          <React.Fragment key={`rail-${tokenNode.id}`}>
+            <Line
+              points={[rail.from, rail.to]}
+              color={tokenNode.selected ? COLORS.cyan : COLORS.dim}
+              transparent
+              opacity={tokenNode.selected ? 0.72 : 0.17}
+              lineWidth={tokenNode.selected ? 1.8 : 0.7}
+            />
+            <SceneLabel
+              position={tokenNode.labelPosition}
+              tone={tokenNode.selected ? 'active' : 'muted'}
+            >
+              {tokenNode.label}
+            </SceneLabel>
+            <DataOrb
+              position={tokenNode.position}
+              color={tokenNode.selected ? COLORS.cyan : COLORS.blue}
+              radius={tokenNode.radius}
+              active={tokenNode.selected}
+              onClick={() => onTokenSelect(tokenNode.index)}
+            />
+          </React.Fragment>
+        );
+      })}
 
       <FlowOrb
-        x={tokenX(selectedToken)}
-        minimum={bottom - 0.9}
-        maximum={layerY(layers.length - 1) + 1.2}
+        x={scene.flow.selectedTokenX}
+        minimum={scene.flow.minimumY}
+        maximum={scene.flow.maximumY}
         color={COLORS.cyan}
+        radius={scene.flow.pulseRadius}
+        depth={scene.flow.pulseDepth}
         reducedMotion={reducedMotion}
       />
 
-      {layers.map((layer, layerIndex) => {
+      {layers.map((_layer, layerIndex) => {
         const active = selectedLayer === layerIndex;
-        const y = layerY(layerIndex);
+        const layerNode = scene.layers[layerIndex];
+
+        if (layerNode.expanded) {
+          return (
+            <group key={`layer-${layerIndex}`}>
+              {scene.expandedBracket.segments.map((segment) => (
+                <Line
+                  key={segment.id}
+                  points={segment.points}
+                  color={COLORS[scene.expandedBracket.colorKey]}
+                  transparent
+                  opacity={0.6}
+                  lineWidth={1.2}
+                />
+              ))}
+              <SceneLabel position={layerNode.openLabelPosition} tone="active">
+                {layerNode.label} · OPEN
+              </SceneLabel>
+
+              {scene.operations.map((operation) => (
+                <group key={operation.id}>
+                  <GlassBox
+                    args={operation.size}
+                    position={operation.position}
+                    color={COLORS[operation.colorKey]}
+                    opacity={0.16}
+                  />
+                  <SceneLabel position={operation.labelPosition} tone="active">
+                    {operation.sequenceIndex + 1} · {operation.shortLabel}
+                  </SceneLabel>
+                  {operation.tokenCells.map((cell) => {
+                    const selected = cell.tokenIndex === selectedToken;
+                    return (
+                      <GlassBox
+                        key={cell.id}
+                        args={cell.size}
+                        position={cell.position}
+                        color={
+                          selected ? COLORS[operation.colorKey] : COLORS.blue
+                        }
+                        active={selected}
+                        opacity={selected ? 0.4 : 0.08}
+                        onClick={() => onTokenSelect(cell.tokenIndex)}
+                      />
+                    );
+                  })}
+                </group>
+              ))}
+
+              {scene.residualBranches.map((branch) => (
+                <Line
+                  key={branch.id}
+                  points={branch.points}
+                  color={COLORS[branch.colorKey]}
+                  transparent
+                  opacity={0.58}
+                  lineWidth={1.35}
+                />
+              ))}
+            </group>
+          );
+        }
+
         return (
           <group key={`layer-${layerIndex}`}>
             <GlassBox
-              args={[plateWidth, active ? 0.25 : 0.16, 2.65]}
-              position={[0, y, 0]}
+              args={layerNode.size}
+              position={layerNode.position}
               color={active ? COLORS.cyan : COLORS.blue}
               active={active}
               opacity={active ? 0.24 : 0.09}
               onClick={() => onLayerSelect(layerIndex)}
             />
             <SceneLabel
-              position={[-plateWidth / 2 - 0.7, y, 0]}
+              position={layerNode.labelPosition}
               tone={active ? 'active' : 'muted'}
             >
-              L{layerIndex + 1}
+              {layerNode.label}
             </SceneLabel>
 
-            {tokens.map((token, tokenIndex) => {
-              const norm = layer.norms.output[tokenIndex] / maxNorm;
+            {layerNode.tokenCells.map((cell) => {
+              const tokenIndex = cell.tokenIndex;
               return (
                 <GlassBox
-                  key={`${layerIndex}-${tokenIndex}-${token}`}
-                  args={[0.52, 0.28 + norm * 0.18, 0.52]}
-                  position={[tokenX(tokenIndex), y + 0.18, 0]}
+                  key={cell.id}
+                  args={cell.size}
+                  position={cell.position}
                   color={
                     tokenIndex === selectedToken
                       ? HEAD_COLORS[layerIndex % HEAD_COLORS.length]
                       : COLORS.blue
                   }
                   active={active && tokenIndex === selectedToken}
-                  opacity={0.2 + norm * 0.26}
+                  opacity={0.2 + cell.strength * 0.26}
                   onClick={() => {
                     onLayerSelect(layerIndex);
                     onTokenSelect(tokenIndex);
@@ -364,29 +423,6 @@ function StackScene({
                 />
               );
             })}
-
-            {exploded &&
-              active &&
-              operationRail.map((operation) => (
-                <group key={operation.label + operation.z}>
-                  <GlassBox
-                    args={[plateWidth - 0.9, 0.13, 0.5]}
-                    position={[0, y, operation.z]}
-                    color={operation.color}
-                    opacity={0.22}
-                  />
-                  <SceneLabel
-                    position={[
-                      plateWidth / 2 - 0.1,
-                      y + 0.08,
-                      operation.z,
-                    ]}
-                    tone="active"
-                  >
-                    {operation.label}
-                  </SceneLabel>
-                </group>
-              ))}
           </group>
         );
       })}
@@ -397,28 +433,39 @@ function StackScene({
         floatIntensity={reducedMotion ? 0 : 0.18}
       >
         <GlassBox
-          args={[2.8, 0.42, 1.35]}
-          position={[0, layerY(layers.length - 1) + 1.35, 0]}
+          args={scene.output.size}
+          position={scene.output.position}
           color={COLORS.mint}
           opacity={0.28}
         />
-        <SceneLabel
-          position={[0, layerY(layers.length - 1) + 1.7, 0]}
-          tone="active"
-        >
+        <SceneLabel position={scene.output.labelPosition} tone="active">
           logits → {model.predictions[0].token}
         </SceneLabel>
       </Float>
 
+      <SceneLabel position={scene.selectedNormPosition} tone="active">
+        {scene.layers[selectedLayer].label} out · ‖x‖{' '}
+        {Math.sqrt(
+          selectedOutput[selectedToken].reduce(
+            (sum, value) => sum + value ** 2,
+            0
+          )
+        ).toFixed(2)}
+      </SceneLabel>
+
       <SceneLabel
-        position={[
-          tokenX(selectedToken),
-          layerY(selectedLayer) + 0.72,
-          exploded ? -2.7 : 0,
-        ]}
-        tone="active"
+        position={scene.labels.sequenceAxis.position}
+        tone="muted"
+        className="gptx-world-label--axis"
       >
-        ‖x‖ {Math.sqrt(selectedOutput[selectedToken].reduce((sum, value) => sum + value ** 2, 0)).toFixed(2)}
+        {scene.labels.sequenceAxis.text}
+      </SceneLabel>
+      <SceneLabel
+        position={scene.labels.computeAxis.position}
+        tone="muted"
+        className="gptx-world-label--axis"
+      >
+        {scene.labels.computeAxis.text}
       </SceneLabel>
     </group>
   );
@@ -1076,7 +1123,6 @@ function World({
   selectedLayer,
   selectedToken,
   selectedHead,
-  exploded,
   variant,
   cacheTokens,
   prefillCount,
@@ -1090,6 +1136,7 @@ function World({
   onCellSelect,
   reducedMotion,
   resetKey,
+  stackBlueprint,
 }) {
   const controls = useRef();
 
@@ -1120,9 +1167,9 @@ function World({
         {mode === 'stack' && (
           <StackScene
             model={model}
+            blueprint={stackBlueprint}
             selectedLayer={selectedLayer}
             selectedToken={selectedToken}
-            exploded={exploded}
             onLayerSelect={onLayerSelect}
             onTokenSelect={onTokenSelect}
             reducedMotion={reducedMotion}
@@ -1193,22 +1240,81 @@ function World({
         maxDistance={22}
         minPolarAngle={0.22}
         maxPolarAngle={Math.PI - 0.25}
-        autoRotate={!reducedMotion && mode === 'stack' && !exploded}
-        autoRotateSpeed={0.28}
+        autoRotate={false}
       />
     </>
   );
 }
 
 export default function GPTScene(props) {
+  const stackBlueprint = useMemo(
+    () => {
+      if (props.mode !== 'stack') return null;
+      const maximumNorm = Math.max(
+        ...props.model.layers.flatMap((layer) => layer.norms.output),
+        0.001
+      );
+      return buildStackSceneBlueprint({
+        tokens: props.model.tokens,
+        layerCount: props.model.layers.length,
+        layerTokenNorms: props.model.layers.map((layer) =>
+          layer.norms.output.map((value) => value / maximumNorm)
+        ),
+        selectedLayer: props.selectedLayer,
+        selectedToken: props.selectedToken,
+        expanded: props.exploded,
+      });
+    },
+    [
+      props.exploded,
+      props.mode,
+      props.model.layers,
+      props.model.tokens,
+      props.selectedLayer,
+      props.selectedToken,
+    ]
+  );
+  const fullBlueprint = stackBlueprint
+    ? JSON.stringify(stackBlueprint).replace(/</g, '\\u003c')
+    : null;
+  const frontElevation = stackBlueprint
+    ? JSON.stringify(projectStackSceneTo2D(stackBlueprint)).replace(
+        /</g,
+        '\\u003c'
+      )
+    : null;
+
   return (
     <div
       className="gptx-canvas"
       role="img"
       aria-label={props.accessibleLabel}
+      data-scene-schema={stackBlueprint?.schema}
+      data-axis-contract={
+        stackBlueprint ? 'x=sequence;y=compute;z=branches' : undefined
+      }
     >
+      {fullBlueprint && (
+        <script
+          type="application/json"
+          data-gptx-scene-blueprint="full"
+          dangerouslySetInnerHTML={{ __html: fullBlueprint }}
+        />
+      )}
+      {frontElevation && (
+        <script
+          type="application/json"
+          data-gptx-scene-blueprint="front-elevation"
+          dangerouslySetInnerHTML={{ __html: frontElevation }}
+        />
+      )}
       <Canvas
-        camera={{ position: CAMERA_PRESETS.stack.position, fov: 43, near: 0.1, far: 80 }}
+        camera={{
+          position: CAMERA_PRESETS.stack.position,
+          fov: 43,
+          near: 0.1,
+          far: 80,
+        }}
         dpr={[1, 2]}
         gl={{
           antialias: true,
@@ -1219,7 +1325,7 @@ export default function GPTScene(props) {
         onPointerMissed={() => setPointer(false)}
       >
         <Suspense fallback={null}>
-          <World {...props} />
+          <World {...props} stackBlueprint={stackBlueprint} />
         </Suspense>
       </Canvas>
     </div>
