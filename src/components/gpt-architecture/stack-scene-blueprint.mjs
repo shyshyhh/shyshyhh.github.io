@@ -1,4 +1,4 @@
-export const STACK_SCENE_SCHEMA = 'gpt-stack-scene/v1';
+export const STACK_SCENE_SCHEMA = 'gpt-stack-scene/v2';
 
 export const STACK_AXES = Object.freeze({
   x: Object.freeze({
@@ -7,7 +7,7 @@ export const STACK_AXES = Object.freeze({
   }),
   y: Object.freeze({
     meaning: 'model compute depth',
-    direction: 'bottom-to-top',
+    direction: 'top-to-bottom',
   }),
   z: Object.freeze({
     meaning: 'parallel branch depth',
@@ -129,16 +129,16 @@ export function buildStackSceneBlueprint({
   const plateWidth = Math.max(6.5, tokens.length * tokenSpacing + 1.5);
 
   const rawLayerY = Array.from({ length: layerCount }, (_, index) => {
-    const centered = (index - (layerCount - 1) / 2) * BASE_LAYER_GAP;
+    const centered = ((layerCount - 1) / 2 - index) * BASE_LAYER_GAP;
     if (!expanded || index === selectedLayer) return centered;
-    return centered + (index < selectedLayer ? -EXPANSION_PUSH : EXPANSION_PUSH);
+    return centered + (index < selectedLayer ? EXPANSION_PUSH : -EXPANSION_PUSH);
   });
 
   const rawOperationY = expanded
     ? STACK_OPERATION_STEPS.map(
         (_, index) =>
-          rawLayerY[selectedLayer] -
-          OPERATION_HALF_SPAN +
+          rawLayerY[selectedLayer] +
+          OPERATION_HALF_SPAN -
           index * OPERATION_GAP
       )
     : [];
@@ -150,17 +150,17 @@ export function buildStackSceneBlueprint({
   const operationY = rawOperationY.map((value) => value - centerY);
   const minimumY = structuralMinimum - centerY;
   const maximumY = structuralMaximum - centerY;
-  const inputY = minimumY - 1.18;
-  const outputY = maximumY + 1.42;
-  const railMinimumY = inputY + 0.16;
-  const railMaximumY = outputY - 0.18;
+  const inputY = maximumY + 1.18;
+  const outputY = minimumY - 1.42;
+  const railStartY = inputY - 0.16;
+  const railEndY = outputY + 0.18;
 
   const tokenNodes = tokens.map((token, index) => ({
     id: `token-${index}`,
     index,
     label: token,
     position: point(tokenX(index), inputY, 0),
-    labelPosition: point(tokenX(index), inputY - 0.4, 0),
+    labelPosition: point(tokenX(index), inputY + 0.4, 0),
     radius: index === selectedToken ? 0.16 : 0.11,
     selected: index === selectedToken,
   }));
@@ -168,7 +168,7 @@ export function buildStackSceneBlueprint({
   const layerNodes = layerY.map((y, index) => ({
     id: `layer-${index}`,
     index,
-    label: `L${index + 1}`,
+    label: `Block ${index + 1}`,
     expanded: expanded && index === selectedLayer,
     selected: index === selectedLayer,
     position: point(0, y, 0),
@@ -211,9 +211,9 @@ export function buildStackSceneBlueprint({
     ? (() => {
         const bracketX = plateWidth / 2 + 0.42;
         const bracketZ = 0.92;
-        const minimumBracketY = operationNodes[0].position[1] - 0.27;
-        const maximumBracketY =
-          operationNodes[operationNodes.length - 1].position[1] + 0.27;
+        const maximumBracketY = operationNodes[0].position[1] + 0.27;
+        const minimumBracketY =
+          operationNodes[operationNodes.length - 1].position[1] - 0.27;
         return {
           id: `layer-${selectedLayer}-open-bracket`,
           colorKey: 'cyan',
@@ -228,15 +228,15 @@ export function buildStackSceneBlueprint({
             {
               id: 'entry-tick',
               points: [
-                point(bracketX - 0.22, minimumBracketY, bracketZ),
-                point(bracketX, minimumBracketY, bracketZ),
+                point(bracketX - 0.22, maximumBracketY, bracketZ),
+                point(bracketX, maximumBracketY, bracketZ),
               ],
             },
             {
               id: 'exit-tick',
               points: [
-                point(bracketX - 0.22, maximumBracketY, bracketZ),
-                point(bracketX, maximumBracketY, bracketZ),
+                point(bracketX - 0.22, minimumBracketY, bracketZ),
+                point(bracketX, minimumBracketY, bracketZ),
               ],
             },
           ],
@@ -253,8 +253,8 @@ export function buildStackSceneBlueprint({
             label: 'attention residual bypass',
             colorKey: 'cyan',
             points: [
-              point(selectedX, operationNodes[0].position[1] - 0.25, 0),
-              point(selectedX, operationNodes[0].position[1] - 0.25, 1.08),
+              point(selectedX, operationNodes[0].position[1] + 0.25, 0),
+              point(selectedX, operationNodes[0].position[1] + 0.25, 1.08),
               point(selectedX, operationNodes[2].position[1], 1.08),
               point(selectedX, operationNodes[2].position[1], 0),
             ],
@@ -264,8 +264,8 @@ export function buildStackSceneBlueprint({
             label: 'MLP residual bypass',
             colorKey: 'mint',
             points: [
-              point(selectedX, operationNodes[2].position[1] + 0.08, 0),
-              point(selectedX, operationNodes[2].position[1] + 0.08, 1.08),
+              point(selectedX, operationNodes[2].position[1] - 0.08, 0),
+              point(selectedX, operationNodes[2].position[1] - 0.08, 1.08),
               point(selectedX, operationNodes[5].position[1], 1.08),
               point(selectedX, operationNodes[5].position[1], 0),
             ],
@@ -279,8 +279,8 @@ export function buildStackSceneBlueprint({
     tokenIndex: index,
     axis: 'y',
     selected: index === selectedToken,
-    from: point(tokenX(index), railMinimumY, 0),
-    to: point(tokenX(index), railMaximumY, 0),
+    from: point(tokenX(index), railStartY, 0),
+    to: point(tokenX(index), railEndY, 0),
   }));
 
   const selectedFlowOrder = [
@@ -310,7 +310,7 @@ export function buildStackSceneBlueprint({
     },
     bounds: {
       x: Object.freeze([-plateWidth / 2, plateWidth / 2]),
-      y: Object.freeze([inputY - 0.45, outputY + 0.48]),
+      y: Object.freeze([outputY - 0.48, inputY + 0.45]),
       z: Object.freeze([-1.35, expanded ? 1.2 : 1.35]),
       structuralY: Object.freeze([minimumY, maximumY]),
     },
@@ -322,10 +322,10 @@ export function buildStackSceneBlueprint({
     rails,
     flow: {
       axis: 'y',
-      direction: 'increasing',
+      direction: 'decreasing',
       selectedTokenX: selectedX,
-      minimumY: railMinimumY,
-      maximumY: railMaximumY,
+      startY: railStartY,
+      endY: railEndY,
       pulseRadius: 0.16,
       pulseDepth: 0.3,
       orderedNodeIds: selectedFlowOrder,
@@ -333,24 +333,24 @@ export function buildStackSceneBlueprint({
     output: {
       id: 'model-output',
       position: point(0, outputY, 0),
-      labelPosition: point(0, outputY + 0.4, 0),
+      labelPosition: point(0, outputY - 0.4, 0),
       size: size(2.8, 0.42, 1.35),
     },
     labels: {
       sequenceAxis: {
         text: 'tokens →',
-        position: point(0, inputY - 0.86, 0),
+        position: point(0, inputY + 0.86, 0),
       },
       computeAxis: {
-        text: 'model depth ↑',
+        text: 'model flow ↓',
         position: point(plateWidth / 2 - 0.62, maximumY + 0.54, 0),
       },
     },
     selectedNormPosition: point(
       selectedX,
       expanded
-        ? operationNodes[operationNodes.length - 1].position[1] + 0.48
-        : layerNodes[selectedLayer].position[1] + 0.72,
+        ? operationNodes[operationNodes.length - 1].position[1] - 0.48
+        : layerNodes[selectedLayer].position[1] - 0.72,
       expanded ? 0.86 : 0
     ),
   };
@@ -468,7 +468,7 @@ export function projectStackSceneTo2D(scene) {
         ? [
             {
               id: `layer-${scene.selection.layerIndex}-open-label`,
-              text: `L${scene.selection.layerIndex + 1} · OPEN`,
+              text: `Block ${scene.selection.layerIndex + 1} · OPEN`,
               x: scene.layers[scene.selection.layerIndex].openLabelPosition[0],
               y: scene.layers[scene.selection.layerIndex].openLabelPosition[1],
             },
@@ -482,7 +482,7 @@ export function projectStackSceneTo2D(scene) {
       },
       {
         id: 'selected-norm-label',
-        text: 'selected layer output norm',
+        text: 'selected block output norm',
         x: scene.selectedNormPosition[0],
         y: scene.selectedNormPosition[1],
         depthOffset: scene.selectedNormPosition[2],
@@ -552,7 +552,7 @@ export function inspectStackSceneBlueprint(scene) {
   return [
     `schema: ${scene.schema}`,
     `axes: x=${scene.axes.x.meaning} (${scene.axes.x.direction}); y=${scene.axes.y.meaning} (${scene.axes.y.direction}); z=${scene.axes.z.meaning} (${scene.axes.z.direction})`,
-    `selection: layer ${scene.selection.layerIndex + 1}, token ${scene.selection.tokenIndex}; ${scene.expanded ? 'open' : 'collapsed'}`,
+    `selection: block ${scene.selection.layerIndex + 1}, token ${scene.selection.tokenIndex}; ${scene.expanded ? 'open' : 'collapsed'}`,
     'front elevation (x/y; z branches flattened):',
     ...rows.map(
       (row) =>
@@ -589,15 +589,15 @@ export function validateStackSceneBlueprint(scene) {
   add(scene.schema === STACK_SCENE_SCHEMA, 'unexpected scene schema');
   add(scene.flow.axis === 'y', 'compute flow must use the Y axis');
   add(
-    scene.flow.direction === 'increasing',
-    'compute flow must move from lower to higher Y'
+    scene.flow.direction === 'decreasing',
+    'compute flow must move from higher to lower Y'
   );
   add(
     scene.layers.every(
       (layer, index, layers) =>
-        index === 0 || layer.position[1] > layers[index - 1].position[1]
+        index === 0 || layer.position[1] < layers[index - 1].position[1]
     ),
-    'layer centers must increase monotonically on Y'
+    'block centers must move top-to-bottom as their index increases'
   );
   add(
     strictlyIncreasingX(scene.tokens),
@@ -626,9 +626,9 @@ export function validateStackSceneBlueprint(scene) {
         rail.from[0] === rail.to[0] &&
         rail.from[2] === 0 &&
         rail.to[2] === 0 &&
-        rail.to[1] > rail.from[1]
+        rail.to[1] < rail.from[1]
     ),
-    'every token rail must be a straight, increasing-Y path at Z=0'
+    'every token rail must be a straight, top-to-bottom path at Z=0'
   );
   add(
     serialPlates.every(
@@ -640,8 +640,8 @@ export function validateStackSceneBlueprint(scene) {
             rail.from[0] <= plate.position[0] + plate.size[0] / 2 &&
             0 >= plate.position[2] - plate.size[2] / 2 &&
             0 <= plate.position[2] + plate.size[2] / 2 &&
-            rail.from[1] < plate.position[1] &&
-            rail.to[1] > plate.position[1]
+            rail.from[1] > plate.position[1] &&
+            rail.to[1] < plate.position[1]
         )
     ),
     'every token rail must intersect every thin serial plate'
@@ -670,9 +670,9 @@ export function validateStackSceneBlueprint(scene) {
               ) && almostEqual(cell.position[2], 0)
           ) &&
           (index === 0 ||
-            operation.position[1] > operations[index - 1].position[1])
+            operation.position[1] < operations[index - 1].position[1])
       ),
-      'serial operations must be horizontal token rows increasing on Y at Z=0'
+      'serial operations must be horizontal token rows moving top-to-bottom at Z=0'
     );
     add(
       scene.operations.every(
@@ -695,7 +695,7 @@ export function validateStackSceneBlueprint(scene) {
               almostEqual(branchPoint[0], scene.flow.selectedTokenX)
             ) &&
             branch.points.some((branchPoint) => branchPoint[2] !== 0) &&
-            branch.points[0][1] < branch.points.at(-1)[1] &&
+            branch.points[0][1] > branch.points.at(-1)[1] &&
             almostEqual(
               branch.points.at(-1)[1],
               expectedEnd.position[1]
@@ -723,8 +723,8 @@ export function validateStackSceneBlueprint(scene) {
   }
 
   add(
-    scene.flow.minimumY < scene.bounds.structuralY[0] &&
-      scene.flow.maximumY > scene.bounds.structuralY[1],
+    scene.flow.startY > scene.bounds.structuralY[1] &&
+      scene.flow.endY < scene.bounds.structuralY[0],
     'the compute rail must span the full stack'
   );
 

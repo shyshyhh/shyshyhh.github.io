@@ -7,11 +7,11 @@ objects.
 ## Spatial contract
 
 - `x` is token sequence position, left to right.
-- `y` is model compute depth, bottom to top.
+- `y` is model compute depth, top to bottom.
 - `z` is reserved for parallel branches, such as residual bypasses.
 - Serial operations must never advance on `z`.
 
-An open transformer block therefore exposes this strictly increasing `y`
+An open transformer block therefore exposes this strictly decreasing `y`
 sequence:
 
 1. RMSNorm
@@ -35,7 +35,7 @@ Print the same orthographic projection as JSON:
 npm run inspect:scene -- --layer=3 --tokens=6 --json
 ```
 
-Check every combination of open/closed state, selected layer, and supported
+Check every combination of open/closed state, selected block, and supported
 token count:
 
 ```sh
@@ -49,7 +49,9 @@ script[data-gptx-scene-blueprint="full"]
 script[data-gptx-scene-blueprint="front-elevation"]
 ```
 
-and exposes the axis contract on `.gptx-canvas[data-axis-contract]`. Browser
+and exposes the directional axis contract
+`x=sequence-right;y=compute-down;z=parallel-branches` on
+`.gptx-canvas[data-axis-contract]`. Browser
 tests can inspect those values without reading pixels or manipulating the
 camera.
 

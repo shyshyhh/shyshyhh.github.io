@@ -234,8 +234,8 @@ function CameraRig({ mode, resetKey, controls, reducedMotion }) {
 
 function FlowOrb({
   x,
-  minimum,
-  maximum,
+  start,
+  end,
   color,
   radius = 0.16,
   depth = 0.3,
@@ -247,13 +247,13 @@ function FlowOrb({
     const progress = reducedMotion
       ? 0.72
       : (clock.getElapsedTime() * 0.16) % 1;
-    ref.current.position.y = THREE.MathUtils.lerp(minimum, maximum, progress);
+    ref.current.position.y = THREE.MathUtils.lerp(start, end, progress);
     ref.current.material.opacity =
       reducedMotion ? 0.9 : 0.55 + Math.sin(progress * Math.PI) * 0.45;
   });
 
   return (
-    <mesh ref={ref} position={[x, minimum, depth]}>
+    <mesh ref={ref} position={[x, start, depth]}>
       <sphereGeometry args={[radius, 20, 20]} />
       <meshStandardMaterial
         color={color}
@@ -312,8 +312,8 @@ function StackScene({
 
       <FlowOrb
         x={scene.flow.selectedTokenX}
-        minimum={scene.flow.minimumY}
-        maximum={scene.flow.maximumY}
+        start={scene.flow.startY}
+        end={scene.flow.endY}
         color={COLORS.cyan}
         radius={scene.flow.pulseRadius}
         depth={scene.flow.pulseDepth}
@@ -822,7 +822,7 @@ function CacheScene({ tokens, prefillCount, currentCount, reducedMotion }) {
             lineWidth={1}
           />
           <SceneLabel position={[-4.85, layerY(layer), 0]} tone="muted">
-            L{layer + 1}
+            B{layer + 1}
           </SceneLabel>
           {visibleTokens.map((token, index) => {
             const generated = index >= prefillCount;
@@ -1291,7 +1291,9 @@ export default function GPTScene(props) {
       aria-label={props.accessibleLabel}
       data-scene-schema={stackBlueprint?.schema}
       data-axis-contract={
-        stackBlueprint ? 'x=sequence;y=compute;z=branches' : undefined
+        stackBlueprint
+          ? 'x=sequence-right;y=compute-down;z=parallel-branches'
+          : undefined
       }
     >
       {fullBlueprint && (

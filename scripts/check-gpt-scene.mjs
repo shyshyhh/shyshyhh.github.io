@@ -69,7 +69,9 @@ for (const tokens of tokenSets) {
         const projection = projectStackSceneTo2D(scene);
         if (
           projection.horizontalAxis.meaning !== 'token sequence position' ||
-          projection.verticalAxis.meaning !== 'model compute depth'
+          projection.horizontalAxis.direction !== 'left-to-right' ||
+          projection.verticalAxis.meaning !== 'model compute depth' ||
+          projection.verticalAxis.direction !== 'top-to-bottom'
         ) {
           throw new Error('2D projection lost the stack axis contract');
         }
@@ -98,5 +100,5 @@ for (const tokens of tokenSets) {
 }
 
 console.log(
-  `PASS ${checked} stack layouts preserve x=sequence, y=compute, z=branches`
+  `PASS ${checked} stack layouts preserve x=sequence →, y=compute ↓, z=branches`
 );

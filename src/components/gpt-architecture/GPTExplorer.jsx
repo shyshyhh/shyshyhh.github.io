@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@radix-ui/themes/components/button';
 import * as SegmentedControl from '@radix-ui/themes/components/segmented-control';
 import * as TextField from '@radix-ui/themes/components/text-field';
+import GPTPrimer from './GPTPrimer.jsx';
 import GPTScene, { HEAD_COLORS } from './GPTScene.jsx';
 import TensorInspector from './TensorInspector.jsx';
 import {
@@ -20,12 +21,12 @@ import {
 import './gpt-explorer.css';
 
 const MODES = [
-  { id: 'stack', label: 'Stack', color: '#2563eb' },
+  { id: 'stack', label: 'Overview', color: '#2563eb' },
   { id: 'attention', label: 'Attention', color: '#7c3aed' },
-  { id: 'rope', label: 'RoPE', color: '#4f46e5' },
-  { id: 'gqa', label: 'GQA', color: '#b45309' },
-  { id: 'cache', label: 'KV cache', color: '#047857' },
-  { id: 'mlp', label: 'SwiGLU', color: '#d14f3f' },
+  { id: 'rope', label: 'Position', color: '#4f46e5' },
+  { id: 'gqa', label: 'Head sharing', color: '#b45309' },
+  { id: 'cache', label: 'KV memory', color: '#047857' },
+  { id: 'mlp', label: 'Token MLP', color: '#d14f3f' },
   { id: 'weights', label: 'Weights', color: '#2563eb' },
 ];
 
@@ -41,7 +42,7 @@ const MODE_COPY = {
     eyebrow: 'TOKEN MIXING',
     title: 'Four heads, four different mixtures',
     summary:
-      'A query matches allowed keys. Softmax turns those matches into weights, and the weights mix values. Every number below comes from the selected trained layer.',
+      'A query matches allowed keys. Softmax turns those matches into weights, and the weights mix values. Every number below comes from the selected trained block.',
     formula: 'softmax((QKᵀ / √d_head) + causal mask) · V',
   },
   rope: {
@@ -62,7 +63,7 @@ const MODE_COPY = {
     eyebrow: 'INCREMENTAL DECODING',
     title: 'Compute the prompt once',
     summary:
-      'Prefill writes one K and V per prompt token into every layer. Decode appends one newcomer, whose query scans the saved keys and mixes the saved values.',
+      'Prefill writes one K and V per prompt token into every block. Decode appends one newcomer, whose query scans the saved keys and mixes the saved values.',
     formula: 'cache elements = 2 · L · T · Hkv · d_head',
   },
   mlp: {
@@ -76,49 +77,10 @@ const MODE_COPY = {
     eyebrow: 'NO HIDDEN WALL OF NUMBERS',
     title: 'Every trained parameter fits',
     summary:
-      'Pick any projection in any layer. Positive weights rise; negative weights drop. Click a cell to read the exact value used by the live forward pass.',
+      'Pick any projection in any block. Positive weights rise; negative weights drop. Click a cell to read the exact value used by the live forward pass.',
     formula: 'largest block projection: 8 × 16 = 128 trainable numbers',
   },
 };
-
-const TOUR = [
-  {
-    mode: 'stack',
-    title: 'Start with the scratchpad',
-    body: 'Each token owns an 8-number residual stream. Open one block and follow the same token upward through every operation.',
-    exploded: true,
-  },
-  {
-    mode: 'attention',
-    title: 'Split one query four ways',
-    body: 'The selected token forms four different 2-D queries. Pick a head and watch its causal mixture change.',
-  },
-  {
-    mode: 'rope',
-    title: 'Give the heads position',
-    body: 'The two numbers in a head make a real plane, so the rotary position operation is a literal rotation.',
-  },
-  {
-    mode: 'gqa',
-    title: 'Share only K and V',
-    body: 'Switch between MHA, GQA, and MQA. The query count stays fixed while the memory count shrinks.',
-  },
-  {
-    mode: 'cache',
-    title: 'Keep the reusable work',
-    body: 'Run prefill, then generate one token at a time. Old queries disappear; old keys and values stay.',
-  },
-  {
-    mode: 'mlp',
-    title: 'Gate features inside each token',
-    body: 'Attention has mixed tokens. SwiGLU now works on each token independently and writes another residual update.',
-  },
-  {
-    mode: 'weights',
-    title: 'Nothing up the sleeve',
-    body: 'The tiny dimensions let the full learned matrices remain clickable. This is the exact checkpoint, not a sketch.',
-  },
-];
 
 const PARAMETER_OPTIONS = [
   { id: 'query', label: 'Wq · query', color: '#168aa1', kind: 'parameter' },
@@ -234,7 +196,7 @@ function DimensionStrip() {
   return (
     <div className="gptx-dimensions" aria-label="Nano GPT dimensions">
       {[
-        ['layers', '4'],
+        ['blocks', '4'],
         ['d model', '8'],
         ['Q / KV', '4 / 2'],
         ['head', '2'],
@@ -318,7 +280,7 @@ function AttentionGrid({
       <div
         className="gptx-attention-grid"
         style={{ '--gptx-token-count': model.tokens.length }}
-        aria-label={`Attention weights for layer ${selectedLayer + 1}, head ${
+        aria-label={`Attention weights for block ${selectedLayer + 1}, head ${
           selectedHead + 1
         }`}
       >
@@ -435,7 +397,7 @@ function MatrixSelection({
               ? 'shared after the final block'
               : matrixInfo.kind === 'activation'
                 ? matrixInfo.scope
-                : `trained layer ${selectedLayer + 1}`
+                : `trained block ${selectedLayer + 1}`
         }
         matrix={matrixInfo.matrix}
         rowLabels={matrixInfo.rowLabels}
@@ -528,7 +490,7 @@ function Inspector({
           <PanelSection label={`next token after “${model.tokens.at(-1)}”`}>
             <PredictionBars predictions={model.predictions} />
           </PanelSection>
-          <PanelSection label={`layer ${selectedLayer + 1} · “${model.tokens[selectedToken]}”`}>
+          <PanelSection label={`block ${selectedLayer + 1} · “${model.tokens[selectedToken]}”`}>
             <div className="gptx-delta">
               <span>
                 attention update
@@ -689,11 +651,11 @@ function Inspector({
             <p className="gptx-footnote">
               {decodeStep === 0
                 ? 'All prompt positions run in parallel under the causal mask.'
-                : 'Only the newcomer runs through the stack; each layer appends its K and V.'}
+                : 'Only the newcomer runs through the stack; each block appends its K and V.'}
             </p>
           </PanelSection>
           <PanelSection
-            label={`exact cache · layer ${selectedLayer + 1} · KV head ${kvHead + 1}`}
+            label={`exact cache · block ${selectedLayer + 1} · KV head ${kvHead + 1}`}
           >
             <TensorInspector
               title="cached K"
@@ -746,7 +708,7 @@ function Inspector({
 
       {mode === 'mlp' && (
         <>
-          <PanelSection label={`layer ${selectedLayer + 1} · token “${model.tokens[selectedToken]}”`}>
+          <PanelSection label={`block ${selectedLayer + 1} · token “${model.tokens[selectedToken]}”`}>
             <VectorStrip
               label="SiLU(g)"
               values={layer.gate[selectedToken].map(
@@ -835,14 +797,14 @@ function ControlStrip({
 
       {showsLayer && (
         <div className="gptx-control-group">
-          <span className="gptx-control-label">layer</span>
+          <span className="gptx-control-label">block</span>
           <div className="gptx-number-buttons">
             {Array.from({ length: NANO_CONFIG.layers }, (_, index) => (
               <button
                 type="button"
                 key={index}
                 className={index === selectedLayer ? 'is-selected' : ''}
-                aria-label={`Select layer ${index + 1}`}
+                aria-label={`Select block ${index + 1}`}
                 aria-pressed={index === selectedLayer}
                 onClick={() => onLayerSelect(index)}
               >
@@ -899,11 +861,11 @@ function FallbackDiagram({ model }) {
     <div className="gptx-webgl-fallback">
       <p className="gptx-eyebrow">WEBGL IS UNAVAILABLE</p>
       <h3>The numbers still work.</h3>
-      <p className="gptx-fallback-axis">logits ↑ · compute flows bottom to top</p>
+      <p className="gptx-fallback-axis">tokens enter above · compute flows ↓</p>
       <div className="gptx-fallback-stack">
-        {Array.from({ length: 4 }, (_, offset) => 3 - offset).map((index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <div key={index}>
-            <span>Layer {index + 1}</span>
+            <span>Block {index + 1}</span>
             <small>RMS → attention → + → RMS → SwiGLU → +</small>
           </div>
         ))}
@@ -917,6 +879,7 @@ function FallbackDiagram({ model }) {
 }
 
 export default function GPTExplorer() {
+  const [labOpen, setLabOpen] = useState(false);
   const [mode, setMode] = useState('stack');
   const [prompt, setPrompt] = useState(DEFAULT_PROMPT);
   const [draftPrompt, setDraftPrompt] = useState(DEFAULT_PROMPT);
@@ -931,14 +894,10 @@ export default function GPTExplorer() {
   const [contextLength, setContextLength] = useState(8192);
   const [matrixId, setMatrixId] = useState('query');
   const [selectedCell, setSelectedCell] = useState(null);
-  const [tourStep, setTourStep] = useState(null);
   const [resetKey, setResetKey] = useState(0);
   const [hasWebGL] = useState(() =>
     typeof window === 'undefined' ? false : supportsWebGL()
   );
-  const tourTriggerRef = useRef(null);
-  const tourCloseRef = useRef(null);
-  const tourWasOpen = useRef(false);
   const reducedMotion = useReducedMotion();
   const activeToken = Math.min(selectedToken, model.tokens.length - 1);
   const draftTokens = rawPromptTokens(draftPrompt);
@@ -964,32 +923,6 @@ export default function GPTExplorer() {
     setDecodeStep(0);
     setPlaying(false);
   }, [model]);
-
-  useEffect(() => {
-    if (tourStep === null) {
-      if (tourWasOpen.current) {
-        tourWasOpen.current = false;
-        tourTriggerRef.current?.focus();
-      }
-      return undefined;
-    }
-
-    let focusFrame;
-    if (!tourWasOpen.current) {
-      tourWasOpen.current = true;
-      focusFrame = window.requestAnimationFrame(() => {
-        tourCloseRef.current?.focus();
-      });
-    }
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') setTourStep(null);
-    };
-    document.addEventListener('keydown', closeOnEscape);
-    return () => {
-      if (focusFrame) window.cancelAnimationFrame(focusFrame);
-      document.removeEventListener('keydown', closeOnEscape);
-    };
-  }, [tourStep]);
 
   const cacheTrace = useMemo(() => {
     const decodes = [];
@@ -1030,14 +963,6 @@ export default function GPTExplorer() {
     }, reducedMotion ? 1600 : 1050);
     return () => window.clearInterval(timer);
   }, [playing, mode, maxDecodeStep, reducedMotion]);
-
-  useEffect(() => {
-    if (tourStep === null) return;
-    const step = TOUR[tourStep];
-    setMode(step.mode);
-    if (typeof step.exploded === 'boolean') setExploded(step.exploded);
-    setResetKey((value) => value + 1);
-  }, [tourStep]);
 
   const matrixInfo = useMemo(() => {
     const option =
@@ -1080,12 +1005,12 @@ export default function GPTExplorer() {
       );
       rowLabels = model.tokens;
       columnLabels = model.tokens;
-      scope = `live layer ${selectedLayer + 1}, query head ${selectedHead + 1}; masked cells are shown as −∞`;
+      scope = `live block ${selectedLayer + 1}, query head ${selectedHead + 1}; masked cells are shown as −∞`;
     } else if (matrixId === 'actAttentionWeights') {
       matrix = layer.attentionWeights[selectedHead];
       rowLabels = model.tokens;
       columnLabels = model.tokens;
-      scope = `live layer ${selectedLayer + 1}, query head ${selectedHead + 1}`;
+      scope = `live block ${selectedLayer + 1}, query head ${selectedHead + 1}`;
     } else if (matrixId === 'actAttentionHeads') {
       matrix = flattenHeads(layer.attentionHeads);
     } else if (matrixId === 'actAttentionUpdate') {
@@ -1125,7 +1050,7 @@ export default function GPTExplorer() {
       rowLabels = model.tokens;
     }
     if (!scope && option.kind === 'activation') {
-      scope = `live layer ${selectedLayer + 1} · all ${model.tokens.length} prompt tokens`;
+      scope = `live block ${selectedLayer + 1} · all ${model.tokens.length} prompt tokens`;
     }
 
     return {
@@ -1167,7 +1092,6 @@ export default function GPTExplorer() {
 
   const changeMode = (nextMode) => {
     setMode(nextMode);
-    setTourStep(null);
     setResetKey((value) => value + 1);
   };
 
@@ -1176,7 +1100,23 @@ export default function GPTExplorer() {
     mode === 'weights' && matrixInfo.kind === 'activation'
       ? { title: 'Every major activation tensor fits' }
       : MODE_COPY[mode];
-  const currentTour = tourStep === null ? null : TOUR[tourStep];
+  if (!labOpen) {
+    return (
+      <div className="gptx-theme">
+        <GPTPrimer
+          model={model}
+          onOpenLab={() => {
+            setLabOpen(true);
+            setMode('stack');
+            setExploded(false);
+            setSelectedLayer(0);
+            setSelectedToken(model.tokens.length - 1);
+            setResetKey((value) => value + 1);
+          }}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="gptx-theme">
@@ -1188,7 +1128,7 @@ export default function GPTExplorer() {
           </span>
           <span>
             <strong>Nano GPT Lab</strong>
-            <small>Modern decoder microscope</small>
+            <small>Advanced decoder lab</small>
           </span>
         </div>
 
@@ -1217,12 +1157,9 @@ export default function GPTExplorer() {
             type="button"
             size="3"
             className="gptx-tour-button"
-            ref={tourTriggerRef}
-            aria-expanded={tourStep !== null}
-            aria-controls="gptx-guided-tour"
-            onClick={() => setTourStep(0)}
+            onClick={() => setLabOpen(false)}
           >
-            Start guided tour
+            Start over
           </Button>
         </div>
       </header>
@@ -1293,11 +1230,11 @@ export default function GPTExplorer() {
               onCellSelect={setSelectedCell}
               reducedMotion={reducedMotion}
               resetKey={resetKey}
-              accessibleLabel={`${activeCopy.title}. Selected layer ${
+              accessibleLabel={`${activeCopy.title}. Selected block ${
                 selectedLayer + 1
               }, token ${model.tokens[activeToken]}, head ${
                 selectedHead + 1
-              }. In the stack view, sequence runs left to right and compute runs bottom to top.`}
+              }. In the overview, sequence runs left to right and compute runs top to bottom.`}
             />
           ) : (
             <FallbackDiagram model={model} />
@@ -1306,13 +1243,13 @@ export default function GPTExplorer() {
           <div className="gptx-stage-hud gptx-stage-hud--top">
             <span>
               {mode === 'stack'
-                ? 'tokens → · compute ↑'
+                ? 'tokens → · compute ↓'
                 : 'Live trained model'}
             </span>
             <span>
               {mode === 'stack'
-                ? `L${selectedLayer + 1} · token ${activeToken}`
-                : `Layer ${selectedLayer + 1} · ${
+                ? `Block ${selectedLayer + 1} · token ${activeToken}`
+                : `Block ${selectedLayer + 1} · ${
                     mode === 'cache'
                       ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
                       : `Head ${selectedHead + 1}`
@@ -1347,50 +1284,6 @@ export default function GPTExplorer() {
             Drag to orbit · scroll to zoom · click to inspect
           </div>
 
-          {currentTour && (
-            <section
-              className="gptx-tour-card"
-              id="gptx-guided-tour"
-              role="dialog"
-              aria-modal="false"
-              aria-labelledby="gptx-tour-title"
-            >
-              <div className="gptx-tour-meta">
-                <span>
-                  guided tour · {tourStep + 1}/{TOUR.length}
-                </span>
-                <button
-                  type="button"
-                  ref={tourCloseRef}
-                  onClick={() => setTourStep(null)}
-                  aria-label="Close guided tour"
-                >
-                  ×
-                </button>
-              </div>
-              <h3 id="gptx-tour-title">{currentTour.title}</h3>
-              <p>{currentTour.body}</p>
-              <div className="gptx-tour-actions">
-                <button
-                  type="button"
-                  disabled={tourStep === 0}
-                  onClick={() => setTourStep((value) => Math.max(0, value - 1))}
-                >
-                  Back
-                </button>
-                <button
-                  type="button"
-                  className="gptx-tour-next"
-                  onClick={() => {
-                    if (tourStep === TOUR.length - 1) setTourStep(null);
-                    else setTourStep((value) => value + 1);
-                  }}
-                >
-                  {tourStep === TOUR.length - 1 ? 'Explore freely' : 'Next'}
-                </button>
-              </div>
-            </section>
-          )}
         </div>
 
         <Inspector
@@ -1451,7 +1344,7 @@ export default function GPTExplorer() {
       </footer>
 
       <p className="gptx-sr-status" aria-live="polite">
-        {activeCopy.title}. Layer {selectedLayer + 1}, head {selectedHead + 1},
+        {activeCopy.title}. Block {selectedLayer + 1}, head {selectedHead + 1},
         token {model.tokens[activeToken]}. Top prediction{' '}
         {model.predictions[0].token}.
       </p>
