@@ -9,16 +9,23 @@ interface Props {
   description?: string;
   wide?: boolean;
   ogImage?: string;
+  forceLight?: boolean;
 }
 
-const { title, description = SITE.description, wide = false, ogImage } = Astro.props;
+const {
+  title,
+  description = SITE.description,
+  wide = false,
+  ogImage,
+  forceLight = false,
+} = Astro.props;
 const pageTitle = title ? `${title} · ${SITE.name}` : SITE.title;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const socialImage = ogImage ? new URL(ogImage, Astro.site) : undefined;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class:list={{ 'force-light': forceLight }}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -44,10 +51,15 @@ const socialImage = ogImage ? new URL(ogImage, Astro.site) : undefined;
     />
     <script is:inline>
       // Runs before paint to avoid a light/dark flash.
-      const theme =
-        localStorage.getItem('theme') ??
-        (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-      document.documentElement.classList.toggle('dark', theme === 'dark');
+      const forceLight = document.documentElement.classList.contains('force-light');
+      if (forceLight) {
+        document.documentElement.classList.remove('dark');
+      } else {
+        const theme =
+          localStorage.getItem('theme') ??
+          (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+      }
     </script>
   </head>
   <body class:list={{ wide }}>

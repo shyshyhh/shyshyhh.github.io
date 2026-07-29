@@ -1,6 +1,8 @@
 ---
 import Base from './Base.astro';
 import GPTExplorer from '../components/gpt-architecture/GPTExplorer.jsx';
+import '@fontsource-variable/geist';
+import '@fontsource-variable/geist-mono';
 import 'katex/dist/katex.min.css';
 
 interface Props {
@@ -21,13 +23,13 @@ const formatted = new Intl.DateTimeFormat('en-US', {
 }).format(date);
 ---
 
-<Base title={title} description={description} wide ogImage={ogImage}>
+<Base title={title} description={description} wide ogImage={ogImage} forceLight>
   <article class="gpt-experience-article">
     <header class="gpt-experience-header">
-      <p class="mono muted gpt-experience-kicker">INTERACTIVE / MODERN DECODER</p>
+      <p class="gpt-experience-kicker">Interactive · modern decoder</p>
       <h1>{title}</h1>
       <p class="gpt-experience-lede">{lede}</p>
-      <p class="mono muted">{formatted}{minutes ? ` · ${minutes} min read + lab` : ''}</p>
+      <p class="gpt-experience-meta">{formatted}{minutes ? ` · ${minutes} min read + lab` : ''}</p>
     </header>
 
     <div class="gpt-explorer-breakout">
@@ -55,38 +57,50 @@ const formatted = new Intl.DateTimeFormat('en-US', {
 <style>
   .gpt-experience-article {
     padding-top: 0.25rem;
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   }
 
   .gpt-experience-header {
-    max-width: 47rem;
-    margin: 0 auto 2.1rem;
+    max-width: 55rem;
+    margin: 0 auto 2.75rem;
     text-align: center;
   }
 
   .gpt-experience-kicker {
-    margin-bottom: 0.8rem;
-    letter-spacing: 0.12em;
+    margin-bottom: 1rem;
+    color: #526072;
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
   }
 
   .gpt-experience-header h1 {
-    max-width: 44rem;
-    margin: 0 auto 0.8rem;
-    font-size: clamp(2.15rem, 6vw, 4.65rem);
-    line-height: 0.98;
-    letter-spacing: -0.045em;
+    max-width: 54rem;
+    margin: 0 auto 1rem;
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(3rem, 6.7vw, 5.5rem);
+    font-weight: 620;
+    line-height: 0.96;
+    letter-spacing: -0.065em;
   }
 
   .gpt-experience-lede {
-    max-width: 42rem;
-    margin: 0.85rem auto 1rem;
-    color: var(--muted);
-    font-size: clamp(1.02rem, 2.3vw, 1.28rem);
-    line-height: 1.55;
+    max-width: 48rem;
+    margin: 1rem auto 1.1rem;
+    color: #526072;
+    font-size: clamp(1.1rem, 2.3vw, 1.35rem);
+    line-height: 1.58;
+  }
+
+  .gpt-experience-meta {
+    color: #718095;
+    font-family: 'Geist Mono Variable', ui-monospace, monospace;
+    font-size: 0.78rem;
   }
 
   .gpt-explorer-breakout {
-    width: min(94vw, 92rem);
-    margin: 0 50% 3.5rem;
+    width: min(97vw, 100rem);
+    margin: 0 50% 4.25rem;
     transform: translateX(-50%);
   }
 
@@ -98,45 +112,65 @@ const formatted = new Intl.DateTimeFormat('en-US', {
 
   .gpt-explorer-fallback {
     display: grid;
-    height: 908px;
+    height: 1045px;
     place-content: center;
     justify-items: center;
-    gap: 0.65rem;
-    color: #f4f7ff;
-    border: 1px solid rgba(139, 164, 219, 0.2);
-    border-radius: 28px;
-    background:
-      radial-gradient(circle at 18% -10%, rgba(65, 99, 255, 0.24), transparent 38%),
-      radial-gradient(circle at 82% 12%, rgba(28, 208, 223, 0.12), transparent 30%),
-      #070b16;
-    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    gap: 0.75rem;
+    color: #172033;
+    border: 1px solid #e1e5ea;
+    border-radius: 24px;
+    background: #f8f7f2;
+    box-shadow: 0 24px 64px rgba(42, 54, 71, 0.09);
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
     text-align: center;
   }
 
   .gpt-explorer-fallback span {
-    color: #70e8ff;
+    color: #2563eb;
     font-size: 2.3rem;
   }
 
   .gpt-explorer-fallback strong {
-    font-size: 1rem;
+    font-size: 1.15rem;
     font-weight: 600;
   }
 
   .gpt-explorer-fallback small {
-    color: #98a5c0;
-    font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace;
-    font-size: 0.68rem;
+    color: #718095;
+    font-family: 'Geist Mono Variable', ui-monospace, monospace;
+    font-size: 0.78rem;
   }
 
   .gpt-experience-copy {
-    max-width: var(--measure);
+    max-width: 42rem;
     margin: 0 auto;
+    color: #30394a;
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    font-size: 1.06rem;
+    line-height: 1.78;
   }
 
-  @media (max-width: 920px) {
+  .gpt-experience-copy :global(h2),
+  .gpt-experience-copy :global(h3) {
+    color: #172033;
+    font-family: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 620;
+    letter-spacing: -0.03em;
+  }
+
+  .gpt-experience-copy :global(h2) {
+    margin-top: 3.5rem;
+    font-size: 1.65rem;
+  }
+
+  .gpt-experience-copy :global(a) {
+    text-decoration-color: #9bb7e8;
+    text-underline-offset: 3px;
+  }
+
+  @media (max-width: 1080px) {
     .gpt-explorer-fallback {
-      height: 1480px;
+      height: 1750px;
     }
   }
 
@@ -158,8 +192,8 @@ const formatted = new Intl.DateTimeFormat('en-US', {
     }
 
     .gpt-explorer-fallback {
-      height: 1585px;
-      border-radius: 17px;
+      height: 1850px;
+      border-radius: 16px;
     }
   }
 </style>

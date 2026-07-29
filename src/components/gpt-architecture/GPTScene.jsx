@@ -1,25 +1,26 @@
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import {
+  Edges,
   Float,
   Html,
   Line,
   OrbitControls,
   RoundedBox,
-  Sparkles,
 } from '@react-three/drei';
 import * as THREE from 'three';
 
 const COLORS = {
-  cyan: '#70e8ff',
-  blue: '#6d8dff',
-  violet: '#ad83ff',
-  coral: '#ff8274',
-  gold: '#ffd166',
-  mint: '#69f0bd',
-  ink: '#0a1020',
-  dim: '#34405d',
-  white: '#f4f7ff',
+  cyan: '#168aa1',
+  blue: '#4f6fae',
+  violet: '#765ba7',
+  coral: '#cf6258',
+  gold: '#b9811f',
+  mint: '#25896f',
+  ink: '#172033',
+  dim: '#6f7d8f',
+  neutral: '#334155',
+  paper: '#f8f7f2',
 };
 
 export const HEAD_COLORS = [
@@ -44,8 +45,8 @@ function SceneLabel({ children, position, tone = 'normal', className = '' }) {
     <Html
       center
       position={position}
-      distanceFactor={10}
-      style={{ pointerEvents: 'none' }}
+      distanceFactor={11.5}
+      style={{ color: COLORS.ink, pointerEvents: 'none' }}
       zIndexRange={[20, 0]}
     >
       <span
@@ -74,6 +75,9 @@ function GlassBox({
 }) {
   const [hovered, setHovered] = useState(false);
   const selected = active || hovered;
+  const surfaceOpacity = selected
+    ? Math.min(0.82 + opacity * 0.18, 0.96)
+    : Math.min(0.32 + opacity * 0.82, 0.78);
 
   return (
     <RoundedBox
@@ -110,15 +114,20 @@ function GlassBox({
     >
       <meshPhysicalMaterial
         color={color}
-        emissive={color}
-        emissiveIntensity={selected ? 0.42 : 0.09}
         transparent
-        opacity={selected ? Math.min(opacity + 0.18, 0.72) : opacity}
-        roughness={0.2}
-        metalness={0.08}
-        clearcoat={0.7}
-        clearcoatRoughness={0.2}
+        opacity={surfaceOpacity}
+        roughness={0.52}
+        metalness={0}
+        clearcoat={0.22}
+        clearcoatRoughness={0.62}
         depthWrite={false}
+      />
+      <Edges
+        scale={1.002}
+        threshold={15}
+        color={selected ? COLORS.ink : color}
+        transparent
+        opacity={selected ? 0.72 : 0.4}
       />
       {children}
     </RoundedBox>
@@ -167,13 +176,12 @@ function DataOrb({
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={active ? 1.25 : 0.14}
+        emissiveIntensity={active ? 0.08 : 0}
+        roughness={0.38}
+        metalness={0.02}
         transparent
-        opacity={active ? 0.98 : 0.32}
+        opacity={active ? 0.98 : 0.48}
       />
-      {active && (
-        <pointLight color={color} intensity={1.5} distance={2.5} decay={2} />
-      )}
     </mesh>
   );
 }
@@ -238,10 +246,11 @@ function FlowOrb({ x, minimum, maximum, color, reducedMotion }) {
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={2.2}
+        emissiveIntensity={0.08}
+        roughness={0.4}
+        metalness={0.02}
         transparent
       />
-      <pointLight color={color} intensity={2} distance={2.5} />
     </mesh>
   );
 }
@@ -435,13 +444,13 @@ function AttentionScene({
       <SceneLabel position={[0, 3.35, 0]} tone="muted">
         query from “{tokens[selectedToken]}”
       </SceneLabel>
-      <DataOrb position={[0, 2.9, 0]} color={COLORS.white} radius={0.22} />
+      <DataOrb position={[0, 2.9, 0]} color={COLORS.neutral} radius={0.22} />
       <Line
         points={[
           [0, 2.68, 0],
           [0, 2.25, 0],
         ]}
-        color={COLORS.white}
+        color={COLORS.neutral}
         transparent
         opacity={0.45}
       />
@@ -857,9 +866,11 @@ function FeatureBank({ values, position, color, label }) {
             <meshStandardMaterial
               color={value >= 0 ? color : COLORS.coral}
               emissive={value >= 0 ? color : COLORS.coral}
-              emissiveIntensity={0.35 + Math.abs(value / maximum) * 0.65}
+              emissiveIntensity={0.025}
+              roughness={0.48}
+              metalness={0.01}
               transparent
-              opacity={0.8}
+              opacity={0.9}
             />
           </mesh>
         );
@@ -882,7 +893,7 @@ function MLPScene({ model, selectedLayer, selectedToken }) {
 
   return (
     <group>
-      <DataOrb position={[-4.25, 0, 0]} color={COLORS.white} radius={0.25} />
+      <DataOrb position={[-4.25, 0, 0]} color={COLORS.neutral} radius={0.25} />
       <SceneLabel position={[-4.25, 0.55, 0]} tone="muted">
         RMSNorm(x)
       </SceneLabel>
@@ -1086,23 +1097,23 @@ function World({
 
   return (
     <>
-      <color attach="background" args={['#070b16']} />
-      <fog attach="fog" args={['#070b16', 12, 30]} />
-      <ambientLight intensity={0.48} color="#b8c7ff" />
+      <color attach="background" args={[COLORS.paper]} />
+      <fog attach="fog" args={[COLORS.paper, 15, 34]} />
+      <hemisphereLight
+        intensity={0.92}
+        color="#ffffff"
+        groundColor="#d8d9d4"
+      />
+      <ambientLight intensity={0.54} color="#fffefb" />
       <directionalLight
         position={[7, 10, 8]}
-        intensity={1.2}
-        color="#dce7ff"
+        intensity={1.55}
+        color="#fffdf8"
       />
-      <pointLight position={[-7, 2, 5]} intensity={16} color="#6248ff" />
-      <pointLight position={[7, -2, 3]} intensity={13} color="#10bcd4" />
-      <Sparkles
-        count={reducedMotion ? 35 : 90}
-        scale={[18, 12, 12]}
-        size={1.1}
-        speed={reducedMotion ? 0 : 0.12}
-        opacity={0.28}
-        color="#8da2ff"
+      <directionalLight
+        position={[-7, 3, 5]}
+        intensity={0.58}
+        color="#dbe7f2"
       />
 
       <group>
@@ -1198,7 +1209,7 @@ export default function GPTScene(props) {
     >
       <Canvas
         camera={{ position: CAMERA_PRESETS.stack.position, fov: 43, near: 0.1, far: 80 }}
-        dpr={[1, 1.65]}
+        dpr={[1, 2]}
         gl={{
           antialias: true,
           alpha: false,

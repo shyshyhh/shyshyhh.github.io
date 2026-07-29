@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Button } from '@radix-ui/themes/components/button';
+import * as SegmentedControl from '@radix-ui/themes/components/segmented-control';
+import * as TextField from '@radix-ui/themes/components/text-field';
 import GPTScene, { HEAD_COLORS } from './GPTScene.jsx';
 import TensorInspector from './TensorInspector.jsx';
 import {
@@ -17,13 +20,13 @@ import {
 import './gpt-explorer.css';
 
 const MODES = [
-  { id: 'stack', label: 'Stack', short: '01', color: '#70e8ff' },
-  { id: 'attention', label: 'Attention', short: '02', color: '#ad83ff' },
-  { id: 'rope', label: 'RoPE', short: '03', color: '#6d8dff' },
-  { id: 'gqa', label: 'GQA', short: '04', color: '#ffd166' },
-  { id: 'cache', label: 'KV cache', short: '05', color: '#69f0bd' },
-  { id: 'mlp', label: 'SwiGLU', short: '06', color: '#ff8274' },
-  { id: 'weights', label: 'Weights', short: '07', color: '#70e8ff' },
+  { id: 'stack', label: 'Stack', color: '#2563eb' },
+  { id: 'attention', label: 'Attention', color: '#7c3aed' },
+  { id: 'rope', label: 'RoPE', color: '#4f46e5' },
+  { id: 'gqa', label: 'GQA', color: '#b45309' },
+  { id: 'cache', label: 'KV cache', color: '#047857' },
+  { id: 'mlp', label: 'SwiGLU', color: '#d14f3f' },
+  { id: 'weights', label: 'Weights', color: '#2563eb' },
 ];
 
 const MODE_COPY = {
@@ -118,40 +121,40 @@ const TOUR = [
 ];
 
 const PARAMETER_OPTIONS = [
-  { id: 'query', label: 'Wq · query', color: '#70e8ff', kind: 'parameter' },
-  { id: 'key', label: 'Wk · key', color: '#ad83ff', kind: 'parameter' },
-  { id: 'value', label: 'Wv · value', color: '#69f0bd', kind: 'parameter' },
-  { id: 'attentionOutput', label: 'Wo · attention out', color: '#6d8dff', kind: 'parameter' },
-  { id: 'gate', label: 'Wgate · SwiGLU gate', color: '#ad83ff', kind: 'parameter' },
-  { id: 'up', label: 'Wup · SwiGLU content', color: '#70e8ff', kind: 'parameter' },
-  { id: 'down', label: 'Wdown · MLP out', color: '#ff8274', kind: 'parameter' },
-  { id: 'normAttention', label: 'RMS gain · attention', color: '#6d8dff', kind: 'parameter' },
-  { id: 'normMlp', label: 'RMS gain · MLP', color: '#6d8dff', kind: 'parameter' },
-  { id: 'embedding', label: 'tied embedding table', color: '#ffd166', kind: 'parameter' },
-  { id: 'finalNorm', label: 'final RMS gain', color: '#69f0bd', kind: 'parameter' },
+  { id: 'query', label: 'Wq · query', color: '#168aa1', kind: 'parameter' },
+  { id: 'key', label: 'Wk · key', color: '#765ba7', kind: 'parameter' },
+  { id: 'value', label: 'Wv · value', color: '#25896f', kind: 'parameter' },
+  { id: 'attentionOutput', label: 'Wo · attention out', color: '#4f6fae', kind: 'parameter' },
+  { id: 'gate', label: 'Wgate · SwiGLU gate', color: '#765ba7', kind: 'parameter' },
+  { id: 'up', label: 'Wup · SwiGLU content', color: '#168aa1', kind: 'parameter' },
+  { id: 'down', label: 'Wdown · MLP out', color: '#cf6258', kind: 'parameter' },
+  { id: 'normAttention', label: 'RMS gain · attention', color: '#4f6fae', kind: 'parameter' },
+  { id: 'normMlp', label: 'RMS gain · MLP', color: '#4f6fae', kind: 'parameter' },
+  { id: 'embedding', label: 'tied embedding table', color: '#b9811f', kind: 'parameter' },
+  { id: 'finalNorm', label: 'final RMS gain', color: '#25896f', kind: 'parameter' },
 ];
 
 const ACTIVATION_OPTIONS = [
-  { id: 'actEmbeddings', label: 'input embeddings', color: '#ffd166', kind: 'activation' },
-  { id: 'actInput', label: 'block input / residual', color: '#70e8ff', kind: 'activation' },
-  { id: 'actNormAttention', label: 'RMSNorm before attention', color: '#6d8dff', kind: 'activation' },
-  { id: 'actQuery', label: 'Q · all query heads', color: '#70e8ff', kind: 'activation' },
-  { id: 'actKey', label: 'K · all KV heads', color: '#ad83ff', kind: 'activation' },
-  { id: 'actValue', label: 'V · all KV heads', color: '#69f0bd', kind: 'activation' },
-  { id: 'actAttentionScores', label: 'attention scores · selected head', color: '#ad83ff', kind: 'activation' },
-  { id: 'actAttentionWeights', label: 'attention weights · selected head', color: '#ad83ff', kind: 'activation' },
-  { id: 'actAttentionHeads', label: 'mixed head outputs', color: '#ffd166', kind: 'activation' },
-  { id: 'actAttentionUpdate', label: 'attention residual update', color: '#6d8dff', kind: 'activation' },
-  { id: 'actAfterAttention', label: 'residual after attention', color: '#70e8ff', kind: 'activation' },
-  { id: 'actNormMlp', label: 'RMSNorm before MLP', color: '#6d8dff', kind: 'activation' },
-  { id: 'actGate', label: 'SwiGLU gate preactivation', color: '#ad83ff', kind: 'activation' },
-  { id: 'actUp', label: 'SwiGLU content projection', color: '#70e8ff', kind: 'activation' },
-  { id: 'actSwiglu', label: 'SwiGLU gated features', color: '#ffd166', kind: 'activation' },
-  { id: 'actMlpUpdate', label: 'MLP residual update', color: '#ff8274', kind: 'activation' },
-  { id: 'actOutput', label: 'block output / residual', color: '#69f0bd', kind: 'activation' },
-  { id: 'actFinal', label: 'final RMS-normalized state', color: '#69f0bd', kind: 'activation' },
-  { id: 'actLogits', label: 'last-token vocabulary logits', color: '#ffd166', kind: 'activation' },
-  { id: 'actProbabilities', label: 'last-token vocabulary probabilities', color: '#69f0bd', kind: 'activation' },
+  { id: 'actEmbeddings', label: 'input embeddings', color: '#b9811f', kind: 'activation' },
+  { id: 'actInput', label: 'block input / residual', color: '#168aa1', kind: 'activation' },
+  { id: 'actNormAttention', label: 'RMSNorm before attention', color: '#4f6fae', kind: 'activation' },
+  { id: 'actQuery', label: 'Q · all query heads', color: '#168aa1', kind: 'activation' },
+  { id: 'actKey', label: 'K · all KV heads', color: '#765ba7', kind: 'activation' },
+  { id: 'actValue', label: 'V · all KV heads', color: '#25896f', kind: 'activation' },
+  { id: 'actAttentionScores', label: 'attention scores · selected head', color: '#765ba7', kind: 'activation' },
+  { id: 'actAttentionWeights', label: 'attention weights · selected head', color: '#765ba7', kind: 'activation' },
+  { id: 'actAttentionHeads', label: 'mixed head outputs', color: '#b9811f', kind: 'activation' },
+  { id: 'actAttentionUpdate', label: 'attention residual update', color: '#4f6fae', kind: 'activation' },
+  { id: 'actAfterAttention', label: 'residual after attention', color: '#168aa1', kind: 'activation' },
+  { id: 'actNormMlp', label: 'RMSNorm before MLP', color: '#4f6fae', kind: 'activation' },
+  { id: 'actGate', label: 'SwiGLU gate preactivation', color: '#765ba7', kind: 'activation' },
+  { id: 'actUp', label: 'SwiGLU content projection', color: '#168aa1', kind: 'activation' },
+  { id: 'actSwiglu', label: 'SwiGLU gated features', color: '#b9811f', kind: 'activation' },
+  { id: 'actMlpUpdate', label: 'MLP residual update', color: '#cf6258', kind: 'activation' },
+  { id: 'actOutput', label: 'block output / residual', color: '#25896f', kind: 'activation' },
+  { id: 'actFinal', label: 'final RMS-normalized state', color: '#25896f', kind: 'activation' },
+  { id: 'actLogits', label: 'last-token vocabulary logits', color: '#b9811f', kind: 'activation' },
+  { id: 'actProbabilities', label: 'last-token vocabulary probabilities', color: '#25896f', kind: 'activation' },
 ];
 
 const TENSOR_OPTIONS = [...PARAMETER_OPTIONS, ...ACTIVATION_OPTIONS];
@@ -275,7 +278,7 @@ function PredictionBars({ predictions }) {
   );
 }
 
-function VectorStrip({ label, values, color = '#70e8ff', limit }) {
+function VectorStrip({ label, values, color = '#168aa1', limit }) {
   const shown = values.slice(0, limit ?? values.length);
   const maximum = Math.max(...shown.map((value) => Math.abs(value)), 0.001);
   return (
@@ -370,19 +373,22 @@ function AttentionGrid({
 
 function Segmented({ label, options, value, onChange }) {
   return (
-    <div className="gptx-segmented" role="group" aria-label={label}>
+    <SegmentedControl.Root
+      className="gptx-segmented"
+      value={value}
+      onValueChange={(nextValue) => nextValue && onChange(nextValue)}
+      size="3"
+      aria-label={label}
+    >
       {options.map((option) => (
-        <button
-          type="button"
+        <SegmentedControl.Item
           key={option.value}
-          className={value === option.value ? 'is-selected' : ''}
-          aria-pressed={value === option.value}
-          onClick={() => onChange(option.value)}
+          value={option.value}
         >
           {option.label}
-        </button>
+        </SegmentedControl.Item>
       ))}
-    </div>
+    </SegmentedControl.Root>
   );
 }
 
@@ -561,7 +567,7 @@ function Inspector({
             <VectorStrip
               label={`K${kvHead + 1}`}
               values={layer.key[selectedToken][kvHead]}
-              color="#ad83ff"
+              color="#765ba7"
             />
             <p className="gptx-footnote">
               Row sum {selectedAttention.reduce((sum, value) => sum + value, 0).toFixed(3)}.
@@ -577,12 +583,12 @@ function Inspector({
             <VectorStrip
               label={`Q · pos ${selectedToken}`}
               values={layer.query[selectedToken][selectedHead]}
-              color="#70e8ff"
+              color="#168aa1"
             />
             <VectorStrip
               label={`K · pos ${Math.max(0, selectedToken - 2)}`}
               values={layer.key[Math.max(0, selectedToken - 2)][kvHead]}
-              color="#ad83ff"
+              color="#765ba7"
             />
           </PanelSection>
           <PanelSection label="what survives the rotation">
@@ -695,7 +701,7 @@ function Inspector({
               matrix={cachedKeys}
               rowLabels={cacheTokens}
               columnLabels={['d0', 'd1']}
-              color="#ad83ff"
+              color="#765ba7"
             />
             <TensorInspector
               title="cached V"
@@ -703,7 +709,7 @@ function Inspector({
               matrix={cachedValues}
               rowLabels={cacheTokens}
               columnLabels={['d0', 'd1']}
-              color="#69f0bd"
+              color="#25896f"
             />
           </PanelSection>
           <PanelSection label="production-scale comparison">
@@ -746,10 +752,10 @@ function Inspector({
               values={layer.gate[selectedToken].map(
                 (value) => value / (1 + Math.exp(-value))
               )}
-              color="#ad83ff"
+              color="#765ba7"
             />
-            <VectorStrip label="up" values={layer.up[selectedToken]} color="#70e8ff" />
-            <VectorStrip label="product" values={layer.swiglu[selectedToken]} color="#ffd166" />
+            <VectorStrip label="up" values={layer.up[selectedToken]} color="#168aa1" />
+            <VectorStrip label="product" values={layer.swiglu[selectedToken]} color="#b9811f" />
           </PanelSection>
           <PanelSection label="residual write">
             <div className="gptx-delta">
@@ -1172,91 +1178,83 @@ export default function GPTExplorer() {
   const currentTour = tourStep === null ? null : TOUR[tourStep];
 
   return (
-    <div className="gptx-shell">
-      <div className="gptx-aurora" aria-hidden="true" />
+    <div className="gptx-theme">
+      <div className={`gptx-shell gptx-shell--${mode}`}>
       <header className="gptx-topbar">
         <div className="gptx-brand">
           <span className="gptx-brand-mark" aria-hidden="true">
-            <i />
-            <i />
-            <i />
+            8
           </span>
           <span>
-            <strong>NANO / GPT</strong>
-            <small>decoder microscope</small>
+            <strong>Nano GPT Lab</strong>
+            <small>Modern decoder microscope</small>
           </span>
         </div>
 
-        <nav className="gptx-mode-nav" aria-label="Explorer views">
-          {MODES.map((item) => (
-            <button
-              type="button"
-              key={item.id}
-              className={mode === item.id ? 'is-selected' : ''}
-              aria-pressed={mode === item.id}
-              style={{ '--gptx-mode-color': item.color }}
-              onClick={() => changeMode(item.id)}
-            >
-              <span>{item.short}</span>
-              {item.label}
-            </button>
-          ))}
+        <nav className="gptx-mode-nav-wrap" aria-label="Explorer chapters">
+          <SegmentedControl.Root
+            className="gptx-mode-nav"
+            value={mode}
+            onValueChange={(nextMode) => nextMode && changeMode(nextMode)}
+            size="3"
+            aria-label="Explorer chapters"
+          >
+            {MODES.map((item) => (
+              <SegmentedControl.Item
+                key={item.id}
+                value={item.id}
+                style={{ '--gptx-mode-color': item.color }}
+              >
+                {item.label}
+              </SegmentedControl.Item>
+            ))}
+          </SegmentedControl.Root>
         </nav>
 
         <div className="gptx-top-actions">
-          {mode === 'stack' && (
-            <button
-              type="button"
-              className={exploded ? 'is-selected' : ''}
-              aria-pressed={exploded}
-              onClick={() => setExploded((value) => !value)}
-            >
-              {exploded ? 'Collapse' : 'Explode'}
-            </button>
-          )}
-          <button
+          <Button
             type="button"
-            onClick={() => setResetKey((value) => value + 1)}
-            aria-label="Reset 3D camera"
-          >
-            Reset view
-          </button>
-          <button
-            type="button"
+            size="3"
             className="gptx-tour-button"
             ref={tourTriggerRef}
             aria-expanded={tourStep !== null}
             aria-controls="gptx-guided-tour"
             onClick={() => setTourStep(0)}
           >
-            Take the tour
-          </button>
+            Start guided tour
+          </Button>
         </div>
       </header>
 
       <div className="gptx-prompt-row">
         <form className="gptx-prompt-form" onSubmit={submitPrompt}>
-          <label htmlFor="gptx-prompt">prompt</label>
-          <input
+          <label htmlFor="gptx-prompt">Try a prompt</label>
+          <TextField.Root
             id="gptx-prompt"
+            size="3"
             value={draftPrompt}
             onChange={(event) => setDraftPrompt(event.target.value)}
             maxLength={72}
             spellCheck="false"
           />
-          <button type="submit">Run forward pass</button>
+          <Button type="submit" size="3">
+            Run
+          </Button>
         </form>
         <div className="gptx-preset-row" aria-label="Example prompts">
+          <span>Examples</span>
           {PRESETS.map((preset) => (
-            <button
+            <Button
               type="button"
+              size="2"
+              variant={prompt === preset ? 'soft' : 'ghost'}
               key={preset}
               className={prompt === preset ? 'is-selected' : ''}
               aria-label={`Use prompt: ${preset}`}
               onClick={() => choosePreset(preset)}
             >
               {preset.split(' ')[1]}
-            </button>
+            </Button>
           ))}
         </div>
         {promptNotices.length ? (
@@ -1303,18 +1301,41 @@ export default function GPTExplorer() {
           )}
 
           <div className="gptx-stage-hud gptx-stage-hud--top">
-            <span>trained micro-language</span>
+            <span>Live trained model</span>
             <span>
-              L{selectedLayer + 1} /{' '}
+              Layer {selectedLayer + 1} ·{' '}
               {mode === 'cache'
-                ? `KV${queryHeadToKvHead(selectedHead) + 1}`
-                : `H${selectedHead + 1}`}{' '}
-              / T{activeToken}
+                ? `KV head ${queryHeadToKvHead(selectedHead) + 1}`
+                : `Head ${selectedHead + 1}`}{' '}
+              · Token {activeToken}
             </span>
+          </div>
+          <div className="gptx-stage-toolbar" aria-label="3D view controls">
+            {mode === 'stack' && (
+              <Button
+                type="button"
+                size="2"
+                variant="surface"
+                className={exploded ? 'is-selected' : ''}
+                aria-pressed={exploded}
+                onClick={() => setExploded((value) => !value)}
+              >
+                {exploded ? 'Collapse layers' : 'Expand layers'}
+              </Button>
+            )}
+            <Button
+              type="button"
+              size="2"
+              variant="surface"
+              onClick={() => setResetKey((value) => value + 1)}
+              aria-label="Reset 3D camera"
+            >
+              Reset view
+            </Button>
           </div>
           <div className="gptx-drag-hint">
             <span aria-hidden="true">↻</span>
-            drag to orbit · scroll to zoom · click to inspect
+            Drag to orbit · scroll to zoom · click to inspect
           </div>
 
           {currentTour && (
@@ -1425,6 +1446,7 @@ export default function GPTExplorer() {
         token {model.tokens[activeToken]}. Top prediction{' '}
         {model.predictions[0].token}.
       </p>
+      </div>
     </div>
   );
 }

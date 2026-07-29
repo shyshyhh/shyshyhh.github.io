@@ -30,6 +30,22 @@
   color-scheme: dark;
 }
 
+:root.force-light {
+  --bg: #fbfaf8;
+  --fg: #1f1e1c;
+  --muted: #757067;
+  --faint: #a8a299;
+  --hair: #e9e6e0;
+  --link-underline: #cfc9bf;
+  --code-bg: #f3f1ec;
+  --selection: #efe9dd;
+  color-scheme: light;
+}
+
+:root.force-light .site-nav {
+  display: none;
+}
+
 /* ------------------------------------------------------------------ */
 /* Base                                                                */
 /* ------------------------------------------------------------------ */

@@ -15,7 +15,9 @@ const isHome = path === '/';
 </header>
 
 <script is:inline>
-  document.getElementById('theme-toggle').addEventListener('click', () => {
+  const themeToggle = document.getElementById('theme-toggle');
+  themeToggle?.addEventListener('click', () => {
+    if (document.documentElement.classList.contains('force-light')) return;
     const dark = document.documentElement.classList.toggle('dark');
     localStorage.setItem('theme', dark ? 'dark' : 'light');
   });
