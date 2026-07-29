@@ -610,11 +610,14 @@ export function validateStackSceneBlueprint(scene) {
         strictlyIncreasingX(layer.tokenCells) &&
         layer.tokenCells.every(
           (cell) =>
+            cell.strength >= 0 &&
+            cell.strength <= 1 &&
+            almostEqual(cell.size[1], 0.28 + cell.strength * 0.18) &&
             almostEqual(cell.position[1], layer.tokenCells[0].position[1]) &&
             almostEqual(cell.position[2], 0)
         )
     ),
-    'every layer must be a thin horizontal plate with left-to-right token cells'
+    'every layer must be a thin horizontal plate with norm-scaled, left-to-right token cells'
   );
   add(
     scene.rails.every(

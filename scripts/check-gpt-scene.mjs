@@ -6,21 +6,50 @@ import {
   validateStackSceneBlueprint,
 } from '../src/components/gpt-architecture/stack-scene-blueprint.mjs';
 
-const tokenSets = [
-  ['the'],
-  ['the', 'robot', 'worked', 'with'],
-  ['the', 'robot', 'worked', 'with', 'code', 'and', 'learned', 'fast'],
+const vocabulary = [
+  'the',
+  'robot',
+  'worked',
+  'with',
+  'code',
+  'and',
+  'learned',
+  'fast',
 ];
+const tokenSets = Array.from({ length: 8 }, (_, index) =>
+  vocabulary.slice(0, index + 1)
+);
+
+function representativeNorms(layerCount, tokenCount) {
+  const valueCount = layerCount * tokenCount;
+  return Array.from({ length: layerCount }, (_, layerIndex) =>
+    Array.from({ length: tokenCount }, (_, tokenIndex) => {
+      const flatIndex = layerIndex * tokenCount + tokenIndex;
+      return flatIndex / Math.max(valueCount - 1, 1);
+    })
+  );
+}
 
 let checked = 0;
 
 for (const tokens of tokenSets) {
+  const layerTokenNorms = representativeNorms(4, tokens.length);
+  const normValues = layerTokenNorms.flat();
+  if (
+    !normValues.includes(0) ||
+    !normValues.includes(1) ||
+    !normValues.some((value) => value > 0 && value < 1)
+  ) {
+    throw new Error('representative norm matrix must cover 0, intermediate, and 1');
+  }
+
   for (let selectedLayer = 0; selectedLayer < 4; selectedLayer += 1) {
     for (const expanded of [false, true]) {
-      for (const selectedToken of [0, tokens.length - 1]) {
+      for (const selectedToken of [...new Set([0, tokens.length - 1])]) {
         const scene = buildStackSceneBlueprint({
           tokens,
           layerCount: 4,
+          layerTokenNorms,
           selectedLayer,
           selectedToken,
           expanded,

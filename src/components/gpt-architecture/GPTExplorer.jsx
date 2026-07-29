@@ -899,8 +899,9 @@ function FallbackDiagram({ model }) {
     <div className="gptx-webgl-fallback">
       <p className="gptx-eyebrow">WEBGL IS UNAVAILABLE</p>
       <h3>The numbers still work.</h3>
+      <p className="gptx-fallback-axis">logits ↑ · compute flows bottom to top</p>
       <div className="gptx-fallback-stack">
-        {Array.from({ length: 4 }, (_, index) => (
+        {Array.from({ length: 4 }, (_, offset) => 3 - offset).map((index) => (
           <div key={index}>
             <span>Layer {index + 1}</span>
             <small>RMS → attention → + → RMS → SwiGLU → +</small>

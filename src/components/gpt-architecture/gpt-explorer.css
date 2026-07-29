@@ -1426,6 +1426,13 @@
   font-size: 27px;
 }
 
+.gptx-webgl-fallback .gptx-fallback-axis {
+  margin: -8px 0 12px;
+  color: var(--gptx-blue);
+  font-family: 'Geist Mono Variable', ui-monospace, monospace;
+  font-size: 13px;
+}
+
 .gptx-webgl-fallback > p:last-child {
   color: var(--gptx-muted);
   font-size: 15px;
