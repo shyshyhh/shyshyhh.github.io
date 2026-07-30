@@ -1,6 +1,5 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
-import react from '@astrojs/react';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
@@ -11,7 +10,7 @@ export default defineConfig({
     '/writing/small-models-can-learn-what-they-cannot-judge':
       '/writing/lesson-sensitivity-without-validated-lesson-selection',
   },
-  integrations: [sitemap(), react()],
+  integrations: [sitemap()],
   markdown: {
     remarkPlugins: [remarkMath],
     rehypePlugins: [rehypeKatex],

@@ -7,9 +7,6 @@ const blog = defineCollection({
     description: z.string().optional(),
     date: z.coerce.date(),
     draft: z.boolean().default(false),
-    experience: z.enum(['gpt-architecture']).optional(),
-    lede: z.string().optional(),
-    ogImage: z.string().optional(),
   }),
 });
 

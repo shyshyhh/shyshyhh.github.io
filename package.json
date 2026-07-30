@@ -6,31 +6,17 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
-    "check:nano": "node scripts/check-nano-gpt.mjs",
-    "check:scene": "node scripts/check-gpt-scene.mjs",
-    "inspect:scene": "node scripts/inspect-gpt-scene.mjs"
+    "preview": "astro preview"
   },
   "dependencies": {
-    "@astrojs/react": "^3.6.3",
     "@astrojs/rss": "^4.0.11",
     "@astrojs/sitemap": "3.2.1",
-    "@fontsource-variable/geist": "^5.3.0",
-    "@fontsource-variable/geist-mono": "^5.3.0",
-    "@radix-ui/themes": "^3.3.0",
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
     "astro": "^4.16.18",
     "katex": "^0.16.21",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
     "rehype-katex": "^7.0.1",
-    "remark-math": "^6.0.0",
-    "three": "^0.170.0"
+    "remark-math": "^6.0.0"
   },
   "devDependencies": {
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
     "typescript": "^5.9.3"
   }
 }
