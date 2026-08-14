@@ -90,15 +90,14 @@ You can feel the pull: that pair is broken, exclude it, and the effect passes
 outcome you observed after training. Two of our ten colonies collapsed to
 chance (one in each arm), so collapse is clearly something this recipe *does*,
 not a rare accident you get to clean up. If your effect only exists after you
-remove the runs that inconvenience it, you don't have an effect; you have a
-selection procedure. The frozen rules made that move impossible, which is
+remove the runs that inconvenience it, you are looking at a selection
+procedure. The frozen rules made that move impossible, which is
 exactly what they were for.
 
 So the honest read: extrapolation fails, there's a suggestive persistence
 signal (mean +0.076, 4/5 pairs) that does not survive the preregistered test,
 and the biggest unmodeled fact is that 20% of training runs simply collapse.
-Training reliability, not memory structure, might be the real bottleneck at
-this scale.
+Training reliability might be the real bottleneck at this scale.
 
 ## What I'd do differently
 
@@ -108,8 +107,7 @@ throughput (a 15x parameter increase costs only ~1.3x wall-clock per update on
 this setup, since the tiny model barely occupies the GPU), a clean
 five-pair ladder at D=256 and D=512 floors at ~380 GPU-hours. That's weeks. Not
 this month, and I'd rather fix training collapse first anyway: a scaling study
-where 20% of your cells might silently not learn is a study of collapse, not
-of scale.
+where 20% of your cells might silently not learn is mostly a study of collapse.
 
 Two things I now believe that I didn't a month ago. First, the sign test
 earned its place: a mean can be dragged over any bar by one lucky seed, but
@@ -119,4 +117,5 @@ procedurally. Knowing the numbers were unreadable until we wrote the unseal
 hashes into the log changed how we argued for three weeks: every debate had to
 be about mechanism, because nobody could argue from the answer.
 
-The colonies didn't scale. The process did.
+The colonies are archived, the log is append-only, and the answer, for now,
+is no.
