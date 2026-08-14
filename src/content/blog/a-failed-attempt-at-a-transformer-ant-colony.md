@@ -1,5 +1,5 @@
 ---
-title: 'A failed attempt at an AI ant colony'
+title: 'A failed attempt at a transformer ant colony'
 description: 'I trained tiny transformer colonies inspired by real ants, froze the pass/fail rules before training, and got an answer I could trust: no.'
 date: 2026-08-14
 draft: false
@@ -52,7 +52,7 @@ with team size; it falls off a cliff. Persistent-notebook colonies average
 control falls the same way. Our headline hope (that these colonies would *gain*
 from more workers at test time) is just dead at this scale.
 
-![Accuracy vs population](/figures/a-failed-attempt-at-an-ai-ant-colony/accuracy-vs-population.svg)
+![Accuracy vs population](/figures/a-failed-attempt-at-a-transformer-ant-colony/accuracy-vs-population.svg)
 *Both arms collapse as the team grows past the training sizes. Thin lines are
 individual colonies; thick lines are means; dotted line is chance (1/17).*
 
@@ -69,7 +69,7 @@ least +0.03.
 
 The mean came in at +0.076. Four of five pairs were positive.
 
-![Paired differences](/figures/a-failed-attempt-at-an-ai-ant-colony/paired-differences.svg)
+![Paired differences](/figures/a-failed-attempt-at-a-transformer-ant-colony/paired-differences.svg)
 *Four of five seed pairs favor persistent notebooks, and the mean clears the
 frozen bar by 2.5x. The rule still says no, because of seed 31604.*
 

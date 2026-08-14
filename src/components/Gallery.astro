@@ -26,9 +26,13 @@ const { photos } = Astro.props as { photos: Photo[] };
     }
   </button>
   <figcaption class="gallery-meta small">
-    <span class="mono muted gallery-counter" aria-live="polite"
-      >1 / {photos.length}</span
-    >
+    {
+      photos.length > 1 && (
+        <span class="mono muted gallery-counter" aria-live="polite">
+          1 / {photos.length}
+        </span>
+      )
+    }
     <span class="muted gallery-caption"><em>{photos[0].caption}</em></span>
   </figcaption>
 </figure>
@@ -41,24 +45,31 @@ const { photos } = Astro.props as { photos: Photo[] };
   const caption = root.querySelector('.gallery-caption');
   let i = 0;
 
-  const inBackZone = (e) => {
-    const r = stage.getBoundingClientRect();
-    return e.clientX - r.left < r.width / 3;
-  };
+  if (imgs.length <= 1) {
+    // Single photo: nothing to navigate, so no counter, no nav cursor.
+    stage.style.cursor = 'default';
+    stage.setAttribute('aria-label', imgs[0]?.alt ?? 'Photo');
+    stage.disabled = true;
+  } else {
+    const inBackZone = (e) => {
+      const r = stage.getBoundingClientRect();
+      return e.clientX - r.left < r.width / 3;
+    };
 
-  stage.addEventListener('click', (e) => {
-    // Left third goes back; middle and right go forward.
-    // Keyboard activation (detail === 0) always goes forward.
-    const step = e.detail !== 0 && inBackZone(e) ? -1 : 1;
-    imgs[i].classList.remove('active');
-    i = (i + step + imgs.length) % imgs.length;
-    imgs[i].classList.add('active');
-    counter.textContent = `${i + 1} / ${imgs.length}`;
-    caption.innerHTML = `<em></em>`;
-    caption.firstChild.textContent = captions[i];
-  });
+    stage.addEventListener('click', (e) => {
+      // Left third goes back; middle and right go forward.
+      // Keyboard activation (detail === 0) always goes forward.
+      const step = e.detail !== 0 && inBackZone(e) ? -1 : 1;
+      imgs[i].classList.remove('active');
+      i = (i + step + imgs.length) % imgs.length;
+      imgs[i].classList.add('active');
+      counter.textContent = `${i + 1} / ${imgs.length}`;
+      caption.innerHTML = `<em></em>`;
+      caption.firstChild.textContent = captions[i];
+    });
 
-  stage.addEventListener('mousemove', (e) => {
-    stage.style.cursor = inBackZone(e) ? 'w-resize' : 'e-resize';
-  });
+    stage.addEventListener('mousemove', (e) => {
+      stage.style.cursor = inBackZone(e) ? 'w-resize' : 'e-resize';
+    });
+  }
 </script>
