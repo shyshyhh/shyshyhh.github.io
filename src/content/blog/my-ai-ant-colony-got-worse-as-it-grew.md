@@ -1,15 +1,20 @@
 ---
-title: 'Bigger teams made my colonies worse'
-description: 'We froze our pass/fail rules before training a colony of tiny transformers. The result came in tempting, and the frozen rules said no.'
+title: 'My AI ant colony got worse as it grew'
+description: 'I trained tiny transformer colonies inspired by real ants, froze the pass/fail rules before training, and got an answer I could trust: no.'
 date: 2026-08-14
 draft: false
 ---
 
-For the last month I've been training ant colonies. Each colony is one tiny
-transformer (160,004 parameters) shared by P workers. The workers talk through a
-public scratchpad, and each worker owns a few private memory slots. Think of the
-slots as a notebook: every round, each worker reads its notebook, writes to the
-scratchpad, and updates its notebook for the next round.
+This project started with real ants. A single ant runs on roughly a quarter
+million neurons and mostly follows local rules, yet the colony farms fungus,
+wages wars, and reroutes around floods. Whatever intelligence is there doesn't
+live in any one ant; it lives in the structure between them. I wanted a tiny
+version of that on a GPU, so for the last month I've been training artificial
+colonies: each one is a single small transformer (160,004 parameters) shared by
+P workers. The workers talk through a public scratchpad, and each worker owns a
+few private memory slots. Think of the slots as a notebook: every round, each
+worker reads its notebook, writes to the scratchpad, and updates its notebook
+for the next round.
 
 The bet was about what happens when the team grows. Train colonies at P=4 and
 P=8, freeze the weights, then drop the same weights into teams of 16 and 32. If
@@ -47,7 +52,7 @@ with team size; it falls off a cliff. Persistent-notebook colonies average
 control falls the same way. Our headline hope (that these colonies would *gain*
 from more workers at test time) is just dead at this scale.
 
-![Accuracy vs population](/figures/bigger-teams-made-my-colonies-worse/accuracy-vs-population.svg)
+![Accuracy vs population](/figures/my-ai-ant-colony-got-worse-as-it-grew/accuracy-vs-population.svg)
 *Both arms collapse as the team grows past the training sizes. Thin lines are
 individual colonies; thick lines are means; dotted line is chance (1/17).*
 
@@ -64,7 +69,7 @@ least +0.03.
 
 The mean came in at +0.076. Four of five pairs were positive.
 
-![Paired differences](/figures/bigger-teams-made-my-colonies-worse/paired-differences.svg)
+![Paired differences](/figures/my-ai-ant-colony-got-worse-as-it-grew/paired-differences.svg)
 *Four of five seed pairs favor persistent notebooks, and the mean clears the
 frozen bar by 2.5x. The rule still says no, because of seed 31604.*
 
