@@ -116,6 +116,3 @@ what our colonies lacked. Second, seal your metrics physically, not
 procedurally. Knowing the numbers were unreadable until we wrote the unseal
 hashes into the log changed how we argued for three weeks: every debate had to
 be about mechanism, because nobody could argue from the answer.
-
-The colonies are archived, the log is append-only, and the answer, for now,
-is no.
